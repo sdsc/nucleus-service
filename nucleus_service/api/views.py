@@ -82,7 +82,8 @@ class ComputeViewSet(ModelViewSet):
 
     @detail_route(methods=['post'])
     def poweroff(self, request, compute_id, compute_id_cluster_id, format=None):
-        """Power off the named compute resource in a named cluster."""        
+        """Power off the named compute resource in a named cluster.
+        """        
         return Response("todo")
     
     def create(self, request, compute_id_cluster_id, format=None):
