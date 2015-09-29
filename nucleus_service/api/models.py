@@ -3,6 +3,9 @@ from rest_framework import serializers
 
 import subprocess
 
+# #################################################
+#  USER
+# #################################################
 
 class User(models.Model):
     username = models.CharField(max_length=24)
@@ -17,8 +20,16 @@ class User(models.Model):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'firstname', 'lastname', 'email', 'created']
-        
+        fields = ['username',
+                  'firstname',
+                  'lastname',
+                  'email',
+                  'created']
+
+# #################################################
+#  PROJECT
+# #################################################
+
 class Project(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=100)
@@ -30,6 +41,10 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['name']
+
+# #################################################
+#  STORAGE
+# #################################################
 
 class Storage(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -43,6 +58,10 @@ class StorageSerializer(serializers.ModelSerializer):
         model = Storage
         fields = ['name']
 
+# #################################################
+#  FRONTEND
+# #################################################
+
 class Frontend(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     #name = models.CharField(max_length=100)
@@ -53,6 +72,10 @@ class Frontend(models.Model):
 class FrontendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Frontend
+
+# #################################################
+#  GROUP
+# #################################################
 
 class Group(models.Model):
     group_id = models.IntegerField()
@@ -70,6 +93,10 @@ class GroupSerializer(serializers.Serializer):
     group_id = serializers.IntegerField()
     state = serializers.CharField(max_length=100)
 
+# #################################################
+#  COMPUTE
+# #################################################
+
 class Compute(object):
     def __init__(self, cluster_id, compute_id):
         self.name = compute_id
@@ -81,6 +108,10 @@ class Compute(object):
 
 class ComputeSerializer(serializers.Serializer):
     pass
+
+# #################################################
+#  CLUSTER
+# #################################################
 
 class Cluster(models.Model):
     fe_name = models.CharField(max_length=100,default="")
@@ -107,6 +138,10 @@ class ClusterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cluster
+
+# #################################################
+#  STORAGEPOOL
+# #################################################
 
 class Storagepool(models.Model):
     created = models.DateTimeField(auto_now_add=True)
