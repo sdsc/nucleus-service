@@ -68,6 +68,7 @@ user_router.register(r'^', views.UserViewSet, base_name='user')
 
 urlpatterns = patterns(
     'api.views',
+    url(r'^accounts', include('django.contrib.auth.urls')),
     url(r'^cluster', include(router.urls)),
     url(r'^cluster', include(compute_router.urls)),
     url(r'^cluster', include(frontend_router.urls)),

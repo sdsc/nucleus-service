@@ -35,17 +35,17 @@ class ClusterViewSet(ModelViewSet):
 
     def destroy(self, request, cluster_id, format=None):
         """Destroy the named cluster."""
-        return Response("todo")
+        return Response("destroy todo")
 
     @detail_route(methods=['post'])
     def stop(self, request, cluster_id, format=None):
         """Stop the named cluster."""
-        return Response("todo")
+        return Response("stop todo")
     
     @detail_route(methods=['post'])
     def start(self, request, cluster_id, format=None):
         """Start the named cluster."""
-        return Response("todo")
+        return Response("start todo")
 
 # #################################################
 #  COMPUTE
@@ -282,6 +282,7 @@ class UserViewSet(ModelViewSet):
 # #################################################
 #  PROJECT
 # #################################################
+
 
 class ProjectViewSet(ModelViewSet):
     lookup_field = 'project_id'
