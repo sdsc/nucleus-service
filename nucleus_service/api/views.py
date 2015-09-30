@@ -6,6 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import detail_route
 from models import *
 
+from api import tasks
 import random
 
 class ClusterViewSet(ModelViewSet):
@@ -46,7 +47,9 @@ class ComputeViewSet(ModelViewSet):
 
     def list(self, request, compute_id_cluster_id, format=None):
         """List the compute resources of the named cluster."""
-        return Response("todo")
+        result = tasks.add.delay(1,3)
+        #res_ar = [v for v in result.collect() if not isinstance(v, (ResultBase, tuple))]
+        return Response("todo %s"%result.collect()[0])
 
     def retrieve(self, request, compute_id, compute_id_cluster_id, format=None):
         """Obtain the details of a named compute resource in a named cluster."""

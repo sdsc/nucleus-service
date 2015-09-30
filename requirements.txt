@@ -3,3 +3,4 @@ djangorestframework
 django-rest-swagger
 drf-nested-routers
 docopts
+rest_framework_httpsignature

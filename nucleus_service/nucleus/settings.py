@@ -40,6 +40,8 @@ INSTALLED_APPS = (
     'rest_framework',
     'api',
     'rest_framework_swagger',
+    'rest_framework_httpsignature',
+    'djcelery',
     )
 
 MIDDLEWARE_CLASSES = (
@@ -79,8 +81,10 @@ WSGI_APPLICATION = 'nucleus.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'read_default_file': '/opt/rocks/etc/.nucleus.my.cnf',
+        }
     }
 }
 
@@ -103,3 +107,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/html/static'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+       #'api.auth.MyAPISignatureAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        #'rest_framework.permissions.IsAuthenticated',
+    )
+}
