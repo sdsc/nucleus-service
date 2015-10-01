@@ -41,7 +41,6 @@ INSTALLED_APPS = (
     'api',
     'rest_framework_swagger',
     'rest_framework_httpsignature',
-    'djcelery',
     )
 
 MIDDLEWARE_CLASSES = (
@@ -94,7 +93,7 @@ DATABASES = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'US/Pacific-New'
 
 USE_I18N = True
 
@@ -111,9 +110,13 @@ STATIC_ROOT = '/var/www/html/static'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-       #'api.auth.MyAPISignatureAuthentication',
+       'api.auth.MyAPISignatureAuthentication',
+       'rest_framework.authentication.BasicAuthentication',
+       'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        #'rest_framework.permissions.IsAuthenticated',
+       'rest_framework.permissions.IsAuthenticated',
     )
 }
+
+CELERY_IMPORTS = ("api.tasks", )
