@@ -5,11 +5,17 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import detail_route
 from models import *
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
 
 from api.tasks import add, mul, list_clusters
 import random
 
 import json
+# #################################################
+#  CLUSTER
+# #################################################
 
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
@@ -27,17 +33,21 @@ class ClusterViewSet(ModelViewSet):
 
     def destroy(self, request, cluster_id, format=None):
         """Destroy the named cluster."""
-        return Response("todo")
+        return Response("destroy todo")
 
     @detail_route(methods=['post'])
     def stop(self, request, cluster_id, format=None):
         """Stop the named cluster."""
-        return Response("todo")
+        return Response("stop todo")
     
     @detail_route(methods=['post'])
     def start(self, request, cluster_id, format=None):
         """Start the named cluster."""
-        return Response("todo")
+        return Response("start todo")
+
+# #################################################
+#  COMPUTE
+# #################################################
 
 class ComputeViewSet(ModelViewSet):
     lookup_field = 'compute_id'
@@ -83,7 +93,8 @@ class ComputeViewSet(ModelViewSet):
 
     @detail_route(methods=['post'])
     def poweroff(self, request, compute_id, compute_id_cluster_id, format=None):
-        """Power off the named compute resource in a named cluster."""        
+        """Power off the named compute resource in a named cluster.
+        """        
         return Response("todo")
     
     def create(self, request, compute_id_cluster_id, format=None):
@@ -95,6 +106,10 @@ class ComputeViewSet(ModelViewSet):
         #    return Response(serializer.data)
         #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response("todo")
+
+# #################################################
+#  GROUP
+# #################################################
 
 class GroupViewSet(ModelViewSet):
     lookup_field = 'group_id'
@@ -113,7 +128,9 @@ class GroupViewSet(ModelViewSet):
         """Destroy the named group resource in a named cluster."""
         return Response("todo")
 
-
+# #################################################
+#  FRONTEND
+# #################################################
        
 class FrontendViewSet(ModelViewSet):
     serializer_class = FrontendSerializer
@@ -146,7 +163,11 @@ class FrontendViewSet(ModelViewSet):
     def poweroff(self, request, nested_1_cluster_id, format=None):
         """Power off the frontend of a named cluster."""
         return Response("todo")
-    
+
+# #################################################
+#  CLUSTERLIST
+# #################################################
+
 class ClusterList(APIView):
     """
     List all clusters, or create a new cluster.
@@ -162,6 +183,10 @@ class ClusterList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# #################################################
+# CLUSTERDETAIL
+# #################################################
 
 class ClusterDetail(APIView):
     """
@@ -196,20 +221,39 @@ class ClusterDetail(APIView):
     @detail_route(methods=['post'])
     def stop(self, request, compute_id, compute_id_cluster_id, format=None):
         return Response("todo")
-    
+
+# #################################################
+#  STORAGE
+# #################################################
+
 class StorageViewSet(ModelViewSet):
     lookup_field = 'storage_id'
     serializer_class = StorageSerializer
 
-    def list(self, request, compute_id_cluster_id, storage_id_compute_id, format=None):
+    def list(self, request,
+             compute_id_cluster_id,
+             storage_id_compute_id,
+             format=None):
         return Response("todo")
 
-    def retrieve(self, request, storage_id, compute_id_cluster_id, storage_id_compute_id, format=None):
+    def retrieve(self, request,
+                 storage_id,
+                 compute_id_cluster_id,
+                 storage_id_compute_id,
+                 format=None):
         return Response("todo")
 
-    def destroy(self, request, storage_id, compute_id_cluster_id, storage_id_compute_id, format=None):
+    def destroy(self, request,
+                storage_id,
+                compute_id_cluster_id,
+                storage_id_compute_id,
+                format=None):
         return Response("todo")
-   
+
+# #################################################
+#  USER
+# #################################################
+
 class UserViewSet(ModelViewSet):
     lookup_field = 'user_id'
     serializer_class = UserSerializer
@@ -219,13 +263,26 @@ class UserViewSet(ModelViewSet):
         List all Persons that can create clusters.
         We will investigate djangos build in classes for that.
         """
+        queryset = User.objects.all()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
         return Response("todo")
 
     def retrieve(self, request, user_id, format=None):
-        return Response("todo")
+        queryset = User.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+        # return Response("todo")
 
     def destroy(self, request, user_id, format=None):
         return Response("todo")
+
+
+# #################################################
+#  PROJECT
+# #################################################
+
 
 class ProjectViewSet(ModelViewSet):
     lookup_field = 'project_id'
@@ -236,10 +293,18 @@ class ProjectViewSet(ModelViewSet):
         List all Projects that can create clusters.
         We will investigate if django has already a project as part of user management.
         """
-        return Response("todo")
+        queryset = Project.objects.all()
+        serializer = ProjectSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+        # return Response("todo")
 
     def retrieve(self, request, project_id, format=None):
-        return Response("todo")
+        queryset = User.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+        # return Response("todo")
 
     def destroy(self, request, project_id, format=None):
         return Response("todo")
