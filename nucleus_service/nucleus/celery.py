@@ -16,6 +16,9 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 app.conf.update(
     CELERY_RESULT_BACKEND='rpc://',
 )
+app.conf.update(CELERY_ACCEPT_CONTENT = ['json'])
+app.conf.update(CELERY_TASK_SERIALIZER = 'json')
+app.conf.update(CELERY_RESULT_SERIALIZER = 'json')
 
 @app.task(bind=True)
 def debug_task(self):

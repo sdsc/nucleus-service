@@ -6,8 +6,10 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import detail_route
 from models import *
 
-from api.tasks import add, mul
+from api.tasks import add, mul, list_clusters
 import random
+
+import json
 
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
@@ -15,17 +17,13 @@ class ClusterViewSet(ModelViewSet):
 
     def list(self, request, format=None):
         """List the available clusters."""
-        clusters = Cluster.objects.all()
-        serializer = ClusterSerializer(clusters, many=True)
-        return Response(serializer.data)
-    #    return Response("todo")
+        result = list_clusters.delay()
+        return Response("%s"%result.get())
 
     def retrieve(self, request, cluster_id, format=None):
         """Obtain details about the named cluster."""
-        try:
-           return Response(ClusterSerializer(Cluster.objects.get(fe_name=cluster_id)).data)
-        except Cluster.DoesNotExist:
-           return Response(None, status=status.HTTP_404_NOT_FOUND)
+        result = list_clusters.delay(cluster_id)
+        return Response("%s"%result.get())
 
     def destroy(self, request, cluster_id, format=None):
         """Destroy the named cluster."""
