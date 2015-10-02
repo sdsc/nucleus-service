@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from celery import shared_task
 from subprocess import Popen, PIPE
+import json
 
 @shared_task()
 def list_clusters(cluster_id=None):
