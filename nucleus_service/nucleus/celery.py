@@ -9,7 +9,7 @@ from nucleus import settings
 app = Celery('nucleus', broker='amqp://celery:nimda_celery@comet-fe1/celery')
 
 app.config_from_object(settings)
-app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+app.autodiscover_tasks(['api'], force=True)
 
 app.conf.update(
     CELERY_RESULT_BACKEND='rpc://',
