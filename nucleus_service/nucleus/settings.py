@@ -120,3 +120,12 @@ REST_FRAMEWORK = {
 CELERY_ROUTES = ({'api.tasks.list_clusters': {
                         'routing_key': 'comet-fe1'
                  }}, )
+
+CELERY_QUEUES = {
+    'comet-fe1': {
+        'binding_key': 'comet-fe1',
+    },
+}
+
+
+
