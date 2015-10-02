@@ -4,13 +4,11 @@ import os
 
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nucleus.settings')
-
-from django.conf import settings
+from nucleus import settings
 
 app = Celery('nucleus', broker='amqp://celery:nimda_celery@comet-fe1/celery')
 
-app.config_from_object('django.conf:settings')
+app.config_from_object(settings)
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 app.conf.update(

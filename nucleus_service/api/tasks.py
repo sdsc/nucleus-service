@@ -5,21 +5,9 @@ from subprocess import Popen, PIPE
 
 @shared_task()
 def list_clusters(cluster_id=None):
-    res = subprocess.Popen(["/opt/rocks/bin/rocks", "list", "cluster", "json=true"], stdout=PIPE)
+    args = ["/opt/rocks/bin/rocks", "list", "cluster", "json=true"]
+    if(cluster_id):
+        args.append(cluster_id)
+    res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
-    return out
-
-
-@shared_task()
-def add(x, y):
-    return x + y
-
-
-@shared_task
-def mul(x, y):
-    return x * y
-
-
-@shared_task
-def xsum(numbers):
-    return sum(numbers)
+    return json.loads(out)

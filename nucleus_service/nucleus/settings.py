@@ -80,9 +80,8 @@ WSGI_APPLICATION = 'nucleus.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'NAME': os.path.join(HOME_DIR, 'comet.db'),
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {'read_default_file': '/opt/rocks/etc/.nucleus.my.cnf'}
     }
 }
 
@@ -118,4 +117,6 @@ REST_FRAMEWORK = {
     )
 }
 
-CELERY_IMPORTS = ("api.tasks", )
+CELERY_ROUTES = ({'api.tasks.list_clusters': {
+                        'routing_key': 'comet-fe1'
+                 }}, )

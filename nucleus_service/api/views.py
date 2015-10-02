@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 
-from api.tasks import add, mul, list_clusters
+from api.tasks import list_clusters
 import random
 
 import json
