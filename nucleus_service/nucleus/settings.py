@@ -38,9 +38,10 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'api',
     'rest_framework_swagger',
-    'rest_framework_httpsignature',
+    'rest_auth'
     )
 
 MIDDLEWARE_CLASSES = (
@@ -108,9 +109,9 @@ STATIC_ROOT = '/var/www/html/static'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-       'api.auth.MyAPISignatureAuthentication',
        'rest_framework.authentication.BasicAuthentication',
        'rest_framework.authentication.SessionAuthentication',
+       'rest_framework.authentication.TokenAuthentication'
     ),
     'DEFAULT_PERMISSION_CLASSES': (
        'rest_framework.permissions.IsAuthenticated',
