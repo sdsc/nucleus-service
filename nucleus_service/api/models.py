@@ -154,3 +154,28 @@ class StoragepoolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Storagepool
         fields = ['name']
+
+# #################################################
+#  CALL
+# #################################################
+
+class Call(models.Model):
+        CALL_STATUS = (
+            (0, 'In progress'),
+            (1, 'Done'),
+            (2, 'Error')
+        )
+
+        created = models.DateTimeField(auto_now_add=True)
+        updated = models.DateTimeField(auto_now=True)
+        status = models.IntegerField(choices=CALL_STATUS)
+        call_id = models.CharField(max_length=128, primary_key=True)
+        data = models.TextField()
+        url = models.CharField(max_length=256, null=True)
+
+class CallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Call
+        #fields = ['name']
+
+

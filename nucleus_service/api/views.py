@@ -12,24 +12,41 @@ from rest_framework import viewsets
 from api.tasks import list_clusters
 import random
 
+from celery.exceptions import TimeoutError
+from celery.result import AsyncResult
+import time
 import json
 # #################################################
 #  CLUSTER
 # #################################################
 
+class asyncAction(object):
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, *args, **kwargs):
+        result = self.f(args, kwargs)
+        if(isinstance(result, AsyncResult)):
+            cur_call, created = Call.objects.get_or_create(status=0, call_id = result.id)
+            response = Response(
+              "Accepted", 
+                status=202,
+                headers={'Location': "/v1/call/%s"%(result.id)})
+            return response
+        
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
     serializer_class = ClusterSerializer
 
+    @asyncAction
     def list(self, request, format=None):
         """List the available clusters."""
-        result = list_clusters.delay()
-        return Response("%s"%result.get())
-
+        return list_clusters.delay()
+            
+    @asyncAction
     def retrieve(self, request, cluster_id, format=None):
         """Obtain details about the named cluster."""
-        result = list_clusters.delay(cluster_id)
-        return Response("%s"%result.get())
+        return list_clusters.delay(cluster_id)
 
     def destroy(self, request, cluster_id, format=None):
         """Destroy the named cluster."""
@@ -278,7 +295,6 @@ class UserViewSet(ModelViewSet):
     def destroy(self, request, user_id, format=None):
         return Response("todo")
 
-
 # #################################################
 #  PROJECT
 # #################################################
@@ -308,3 +324,35 @@ class ProjectViewSet(ModelViewSet):
 
     def destroy(self, request, project_id, format=None):
         return Response("todo")
+
+# #################################################
+#  CALL
+# #################################################
+
+
+class CallViewSet(ModelViewSet):
+    lookup_field = 'call_id'
+    serializer_class = CallSerializer
+
+    def retrieve(self, request, call_id, format=None):
+        call = Call.objects.get(pk=call_id)
+        if(call.status < 1):
+            serializer = self.serializer_class(call)
+            return Response(serializer.data)
+
+        if(call.url):
+            location = call.url
+        else:
+            location = "/v1/call/%s/result"%(call_id)
+
+        response = Response(
+            "", 
+            status=303,
+            headers={'Location': location})
+        return response
+ 
+
+    @detail_route(methods=['get'])
+    def result(self, request, call_id, format=None):
+        call = Call.objects.get(pk=call_id)
+        return Response(call.data)

@@ -44,6 +44,21 @@ class FrontendRouter(NestedSimpleRouter):
         )
     ]
 
+class CallRouter(SimpleRouter):
+    routes = [
+        Route(
+           url=r'^{prefix}/{lookup}/$',
+           mapping={'get': 'retrieve'},
+           name='{basename}-detail',
+           initkwargs={'suffix': 'Detail'}
+        ),
+        DynamicDetailRoute(
+            url=r'^{prefix}/{lookup}/{methodname}$',
+            name='{basename}-{methodname}',
+            initkwargs={}
+        )
+    ]
+
 
 router = MainRouter()
 router.register(r'^', views.ClusterViewSet, base_name='cluster')
@@ -66,6 +81,9 @@ project_router.register(r'^', views.ProjectViewSet, base_name='project')
 user_router = MainRouter()
 user_router.register(r'^', views.UserViewSet, base_name='user')
 
+call_router = CallRouter()
+call_router.register(r'^', views.CallViewSet, base_name='call')
+
 urlpatterns = patterns(
     'api.views',
     url(r'^accounts', include('django.contrib.auth.urls')),
@@ -74,6 +92,8 @@ urlpatterns = patterns(
     url(r'^cluster', include(frontend_router.urls)),
     url(r'^cluster', include(group_router.urls)),
     url(r'^cluster', include(storage_router.urls)),
+
+    url(r'^call', include(call_router.urls)),
     #
     # Users
     #
