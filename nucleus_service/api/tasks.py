@@ -26,7 +26,10 @@ def list_clusters(cluster_id=None):
 def store_result(task_id, result):
     from api.models import Call
     cur_call = Call.objects.get(pk = task_id)
-    cur_call.data = str(result)
+    try:
+        cur_call.data = json.dumps(result)
+    except TypeError:
+        cur_call.data = str(result)
     cur_call.status = 1
     cur_call.save()
 

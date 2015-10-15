@@ -12,6 +12,8 @@ from rest_framework import viewsets
 from api.tasks import list_clusters
 import random
 
+from functools import wraps
+
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 import time
@@ -20,20 +22,21 @@ import json
 #  CLUSTER
 # #################################################
 
-class asyncAction(object):
-    def __init__(self, f):
-        self.f = f
 
-    def __call__(self, *args, **kwargs):
-        result = self.f(args, kwargs)
+def asyncAction(f):
+     @wraps(f)
+     def wrapper(*args, **kwds):
+        result = f(*args, **kwds)
         if(isinstance(result, AsyncResult)):
             cur_call, created = Call.objects.get_or_create(status=0, call_id = result.id)
             response = Response(
-              "Accepted", 
+              None, 
                 status=202,
                 headers={'Location': "/v1/call/%s"%(result.id)})
             return response
-        
+     return wrapper
+
+       
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
     serializer_class = ClusterSerializer
@@ -44,7 +47,7 @@ class ClusterViewSet(ModelViewSet):
         return list_clusters.delay()
             
     @asyncAction
-    def retrieve(self, request, cluster_id, format=None):
+    def retrieve(self, request, cluster_id=None, format=None):
         """Obtain details about the named cluster."""
         return list_clusters.delay(cluster_id)
 
@@ -355,4 +358,7 @@ class CallViewSet(ModelViewSet):
     @detail_route(methods=['get'])
     def result(self, request, call_id, format=None):
         call = Call.objects.get(pk=call_id)
-        return Response(call.data)
+        try:
+            return Response(json.loads(call.data))
+        except TypeError:
+            return Response(call.data)
