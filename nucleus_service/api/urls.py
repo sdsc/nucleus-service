@@ -20,7 +20,7 @@ class MainRouter(SimpleRouter):
            initkwargs={'suffix': 'Detail'}
         ),
         DynamicDetailRoute(
-            url=r'^{prefix}/{lookup}/{methodname}$',
+            url=r'^{prefix}/{methodname}$',
             name='{basename}-{methodname}',
             initkwargs={}
         )

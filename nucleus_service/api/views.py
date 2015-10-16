@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 
-from api.tasks import list_clusters
+from api.tasks import list_clusters, poweron_nodes
 import random
 
 from functools import wraps
@@ -18,9 +18,6 @@ from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 import time
 import json
-# #################################################
-#  CLUSTER
-# #################################################
 
 
 def asyncAction(f):
@@ -36,6 +33,9 @@ def asyncAction(f):
             return response
      return wrapper
 
+# #################################################
+#  CLUSTER
+# #################################################
        
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
@@ -100,16 +100,19 @@ class ComputeViewSet(ModelViewSet):
         return Response("todo")
     
     @detail_route(methods=['post'])
-    def poweron(self, request, compute_id, compute_id_cluster_id, format=None):
-        compute_nodes = Compute(compute_id_cluster_id, compute_id)
-        res, err = compute_nodes.poweron()
-        job_id = random.randint(10000, 70000)
-        Group.create(job_id).save()
-        response = Response(
-            "booted up "+compute_id+" nodes with result "+res+" and error "+err, 
-            status=303,
-            headers={'Location': "/v1/cluster/%s/group/%s"%(compute_id_cluster_id, job_id)})
-        return response
+    @asyncAction
+    def poweron(self, request, compute_id_cluster_id, format=None):
+        nodes = []
+        hosts = []
+        for obj in request.data:
+            nodes.append(obj["node"])
+            hosts.append(obj["host"])
+        #compute_nodes = Compute(compute_id_cluster_id, compute_id)
+        #res, err = compute_nodes.poweron()
+        #job_id = random.randint(10000, 70000)
+        #Group.create(job_id).save()
+        #return Response("Done %s %s"%(nodes, hosts))
+        return poweron_nodes.delay(nodes, hosts) 
 
     @detail_route(methods=['post'])
     def poweroff(self, request, compute_id, compute_id_cluster_id, format=None):

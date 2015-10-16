@@ -14,6 +14,13 @@ class CallbackTask(Task):
 
 
 @shared_task(base=CallbackTask, ignore_result=True)
+def poweron_nodes(nodes, hosts):
+    args = ["/root/test/boot-these-nodes-on-these-hosts.sh", " ".join(nodes), " ".join(hosts)]
+    res = Popen(args, stdout=PIPE, stderr=PIPE)
+    out, err = res.communicate()
+    return "%s\n%s"%(out, err)
+
+@shared_task(base=CallbackTask, ignore_result=True)
 def list_clusters(cluster_id=None):
     args = ["/opt/rocks/bin/rocks", "list", "cluster", "json=true"]
     if(cluster_id):
