@@ -7,7 +7,10 @@ from rest_framework.decorators import detail_route
 from models import *
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import PermissionDenied
 from rest_framework import viewsets
+
+from django.shortcuts import get_object_or_404
 
 from api.tasks import list_clusters, poweron_nodes
 import random
@@ -43,13 +46,17 @@ class ClusterViewSet(ModelViewSet):
 
     def list(self, request, format=None):
         """List the available clusters."""
-        clusters = Cluster.objects.all()
+        user_groups = request.user.groups.all()
+        clusters = Cluster.objects.filter(project__in=user_groups)
         serializer = ClusterSerializer(clusters, many=True)
         return Response(serializer.data)
             
     @asyncAction
-    def retrieve(self, request, cluster_id=None, format=None):
+    def retrieve(self, request, cluster_id, format=None):
         """Obtain details about the named cluster."""
+        clust = get_object_or_404(Cluster, fe_name=cluster_id)
+        if(not clust.project in request.user.groups.all()):
+            raise PermissionDenied()
         return list_clusters.delay(cluster_id)
 
     def destroy(self, request, cluster_id, format=None):
@@ -103,6 +110,10 @@ class ComputeViewSet(ModelViewSet):
     @detail_route(methods=['post'])
     @asyncAction
     def poweron(self, request, compute_id_cluster_id, format=None):
+        clust = get_object_or_404(Cluster, fe_name=compute_id_cluster_id)
+        if(not clust.project in request.user.groups.all()):
+            raise PermissionDenied()
+
         nodes = []
         hosts = []
         for obj in request.data:
