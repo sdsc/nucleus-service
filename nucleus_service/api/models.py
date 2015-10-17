@@ -1,5 +1,6 @@
 from django.db import models
 from rest_framework import serializers
+import django.contrib.auth.models
 
 import subprocess
 
@@ -114,30 +115,20 @@ class ComputeSerializer(serializers.Serializer):
 # #################################################
 
 class Cluster(models.Model):
-    fe_name = models.CharField(max_length=100,default="")
-    vlan = models.IntegerField(default=0)
-    fe_pub_ip = models.CharField(max_length=45,default="0.0.0.0")
-    fe_pub_gateway = models.CharField(max_length=45,default="0.0.0.0")
-    fe_container = models.CharField(max_length=100,default="comet-ln1")
-    num_computes = models.IntegerField(default=3)
-    compute_containers = models.CharField(max_length=255,default="")
-    fe_cdrom = models.CharField(max_length=255,default="none")
+    fe_name = models.CharField(max_length=100)
+    description = models.TextField(default="")
+    project = models.ForeignKey(django.contrib.auth.models.Group)
 
     class Meta:
         managed = True
 
 class ClusterSerializer(serializers.ModelSerializer):
-    fe_name = serializers.CharField(max_length=100,default="")
-    vlan = serializers.IntegerField(default=0)
-    fe_pub_ip = serializers.CharField(max_length=45,default="0.0.0.0")
-    fe_pub_gateway = serializers.CharField(max_length=45,default="0.0.0.0")
-    fe_container = serializers.CharField(max_length=100,default="comet-ln1")
-    num_computes = serializers.IntegerField(default=3)
-    compute_containers = serializers.CharField(max_length=255,default="")
-    fe_cdrom = serializers.CharField(max_length=255,default="none")
+    fe_name = serializers.CharField(max_length=100)
+    description = serializers.CharField(default="")
 
     class Meta:
         model = Cluster
+        fields = ('fe_name', 'description')
 
 # #################################################
 #  STORAGEPOOL

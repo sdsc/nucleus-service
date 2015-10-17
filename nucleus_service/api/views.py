@@ -41,10 +41,11 @@ class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
     serializer_class = ClusterSerializer
 
-    @asyncAction
     def list(self, request, format=None):
         """List the available clusters."""
-        return list_clusters.delay()
+        clusters = Cluster.objects.all()
+        serializer = ClusterSerializer(clusters, many=True)
+        return Response(serializer.data)
             
     @asyncAction
     def retrieve(self, request, cluster_id=None, format=None):

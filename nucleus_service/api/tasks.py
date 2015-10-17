@@ -21,13 +21,27 @@ def poweron_nodes(nodes, hosts):
     return "%s\n%s"%(out, err)
 
 @shared_task(base=CallbackTask, ignore_result=True)
-def list_clusters(cluster_id=None):
-    args = ["/opt/rocks/bin/rocks", "list", "cluster", "json=true"]
-    if(cluster_id):
-        args.append(cluster_id)
+def list_clusters(cluster_id):
+    args = ["/opt/rocks/bin/rocks", "list", "cluster", cluster_id, "json=true"]
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
-    return json.loads(out)
+    cluster_rocks_desc = json.loads(out)
+    res_clust = {
+        'name':cluster_id,
+        'frontend': cluster_id,
+        'ip': 'TBD',
+        'clients': []
+    }
+    for record in cluster_rocks_desc:
+        if not record['frontend']:
+            res_clust['clients'] = [ 
+                    {
+                        'name': client['client nodes'],
+                        'ip': 'TBD',
+                        'type': client['type']
+                    } for client in record["cluster"]
+                ]
+    return res_clust
 
 @shared_task(ignore_result=True)
 def store_result(task_id, result):
