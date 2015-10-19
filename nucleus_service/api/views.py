@@ -57,7 +57,7 @@ class ClusterViewSet(ModelViewSet):
         clust = get_object_or_404(Cluster, fe_name=cluster_id)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
-        return list_clusters.delay(cluster_id)
+        return list_clusters.delay([cluster_id])
 
     def destroy(self, request, cluster_id, format=None):
         """Destroy the named cluster."""
