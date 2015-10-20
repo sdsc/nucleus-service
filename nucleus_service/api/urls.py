@@ -78,9 +78,6 @@ storage_router.register(r'storage', views.StorageViewSet, base_name='cluster-com
 project_router = MainRouter()
 project_router.register(r'^', views.ProjectViewSet, base_name='project')
 
-user_router = MainRouter()
-user_router.register(r'^', views.UserViewSet, base_name='user')
-
 call_router = CallRouter()
 call_router.register(r'^', views.CallViewSet, base_name='call')
 
@@ -97,7 +94,7 @@ urlpatterns = patterns(
     #
     # Users
     #
-    url(r'^user', include(user_router.urls)),
+    url(r'^user', views.UserDetailsView.as_view(), name='rest_user_details'),
     #
     # Projects
     #

@@ -1,31 +1,9 @@
 from django.db import models
 from rest_framework import serializers
 import django.contrib.auth.models
+from django.contrib.auth import get_user_model, authenticate
 
 import subprocess
-
-# #################################################
-#  USER
-# #################################################
-
-class User(models.Model):
-    username = models.CharField(max_length=24)
-    created = models.DateTimeField(auto_now_add=True)
-    firstname = models.CharField(max_length=100)
-    lastname = models.CharField(max_length=100)
-    email = models.CharField(max_length=100)            
-
-    class Meta:
-        ordering = ('username',)
-        
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username',
-                  'firstname',
-                  'lastname',
-                  'email',
-                  'created']
 
 # #################################################
 #  PROJECT
@@ -38,11 +16,6 @@ class Project(models.Model):
     class Meta:
         ordering = ('name',)
 
-class ProjectSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = ['name']
-
 # #################################################
 #  STORAGE
 # #################################################
@@ -54,11 +27,6 @@ class Storage(models.Model):
     class Meta:
         ordering = ('name',)
 
-class StorageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Storage
-        fields = ['name']
-
 # #################################################
 #  FRONTEND
 # #################################################
@@ -69,10 +37,6 @@ class Frontend(models.Model):
 
     class Meta:
         pass
-
-class FrontendSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Frontend
 
 # #################################################
 #  GROUP
@@ -90,10 +54,6 @@ class Group(models.Model):
     class Meta:
         managed = True
 
-class GroupSerializer(serializers.Serializer):
-    group_id = serializers.IntegerField()
-    state = serializers.CharField(max_length=100)
-
 # #################################################
 #  COMPUTE
 # #################################################
@@ -107,9 +67,6 @@ class Compute(object):
         return [out, err]
         
 
-class ComputeSerializer(serializers.Serializer):
-    pass
-
 # #################################################
 #  CLUSTER
 # #################################################
@@ -122,13 +79,6 @@ class Cluster(models.Model):
     class Meta:
         managed = True
 
-class ClusterSerializer(serializers.ModelSerializer):
-    fe_name = serializers.CharField(max_length=100)
-    description = serializers.CharField(default="")
-
-    class Meta:
-        model = Cluster
-        fields = ('fe_name', 'description')
 
 # #################################################
 #  STORAGEPOOL
@@ -141,11 +91,6 @@ class Storagepool(models.Model):
     class Meta:
         ordering = ('name',)
         
-class StoragepoolSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Storagepool
-        fields = ['name']
-
 # #################################################
 #  CALL
 # #################################################
@@ -164,9 +109,5 @@ class Call(models.Model):
         data = models.TextField()
         url = models.CharField(max_length=256, null=True)
 
-class CallSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Call
-        #fields = ['name']
 
 

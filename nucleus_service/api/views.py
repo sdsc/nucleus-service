@@ -5,10 +5,15 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import detail_route
 from models import *
+from serializers import *
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
+from rest_framework.generics import RetrieveUpdateAPIView
+
 
 from django.shortcuts import get_object_or_404
 
@@ -289,29 +294,23 @@ class StorageViewSet(ModelViewSet):
 #  USER
 # #################################################
 
-class UserViewSet(ModelViewSet):
-    lookup_field = 'user_id'
-    serializer_class = UserSerializer
+class UserDetailsView(RetrieveUpdateAPIView):
 
-    def list(self, request, format=None):
-        """
-        List all Persons that can create clusters.
-        We will investigate djangos build in classes for that.
-        """
-        queryset = User.objects.all()
-        serializer = UserSerializer(queryset, many=True)
-        return Response(serializer.data)
-        return Response("todo")
+    """
+    Returns User's details in JSON format.
 
-    def retrieve(self, request, user_id, format=None):
-        queryset = User.objects.all()
-        user = get_object_or_404(queryset, pk=pk)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-        # return Response("todo")
+    Accepts the following GET parameters: token
+    Accepts the following POST parameters:
+        Required: token
+        Optional: email, first_name, last_name and UserProfile fields
+    Returns the updated UserProfile and/or User object.
+    """
+    serializer_class = UserDetailsSerializer
+    permission_classes = (IsAuthenticated,)
 
-    def destroy(self, request, user_id, format=None):
-        return Response("todo")
+    def get_object(self):
+        return self.request.user
+
 
 # #################################################
 #  PROJECT
