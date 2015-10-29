@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
+import django.contrib.auth.models
 from django.conf import settings
 
 from models import *
@@ -14,10 +15,9 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'first_name', 'last_name')
         read_only_fields = ('email', )
 
-
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Project
+        model = django.contrib.auth.models.Group
         fields = ['name']
 
 class StorageSerializer(serializers.ModelSerializer):
@@ -29,20 +29,33 @@ class FrontendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Frontend
 
-class GroupSerializer(serializers.Serializer):
-    group_id = serializers.IntegerField()
-    state = serializers.CharField(max_length=100)
+class ComputeSerializer(serializers.ModelSerializer):
+    #name = serializers.CharField(max_length=128)
+    cluster = serializers.SlugRelatedField(read_only=True, slug_field='fe_name')
+    class Meta:
+        model = Compute
+        fields = ("name", "host", "ip", "memory", "cpus", "cluster")
+        read_only_fields = ("ip", "memory", "cpus", "cluster")
+        depth = 1
 
-class ComputeSerializer(serializers.Serializer):
-    pass
+class ComputeSetSerializer(serializers.ModelSerializer):
+    computes=ComputeSerializer(many=True, read_only=True)
+    cluster = serializers.SlugRelatedField(read_only=True, slug_field='fe_name')
+    class Meta:
+        model = ComputeSet
+        fields = ['computes', 'id', 'state', 'cluster']
+        read_only_fields = ('id', 'state', 'cluster')
 
 class ClusterSerializer(serializers.ModelSerializer):
     fe_name = serializers.CharField(max_length=100)
     description = serializers.CharField(default="")
+    computes = ComputeSerializer(many=True, read_only=True)
+    project=serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     class Meta:
         model = Cluster
-        fields = ('fe_name', 'description')
+        fields = ('fe_name', 'description', 'computes', 'project')
+        read_only_fields = ('computes', 'fe_name')
 
 class StoragepoolSerializer(serializers.ModelSerializer):
     class Meta:

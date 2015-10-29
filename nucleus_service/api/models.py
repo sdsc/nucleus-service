@@ -5,16 +5,21 @@ from django.contrib.auth import get_user_model, authenticate
 
 import subprocess
 
+COMPUTESET_STATE_QUEUED = "queued"
+COMPUTESET_STATE_COMPLETED = "completed"
+
 # #################################################
-#  PROJECT
+#  CLUSTER
 # #################################################
 
-class Project(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=100)
+class Cluster(models.Model):
+    fe_name = models.CharField(max_length=128)
+    description = models.TextField(default="")
+    project = models.ForeignKey(django.contrib.auth.models.Group)
 
     class Meta:
-        ordering = ('name',)
+        managed = True
+
 
 # #################################################
 #  STORAGE
@@ -39,42 +44,34 @@ class Frontend(models.Model):
         pass
 
 # #################################################
-#  GROUP
+#  COMPUTE
 # #################################################
 
-class Group(models.Model):
-    group_id = models.IntegerField()
-    state = models.CharField(max_length=100, default="queued")
-
-    @classmethod
-    def create(cls, group_id):
-        group = cls(group_id=group_id, state="running")
-        return group
+class Compute(models.Model):
+    name = models.CharField(max_length=128)
+    cluster = models.ForeignKey(Cluster, related_name='computes')
+    ip = models.GenericIPAddressField()
+    memory = models.IntegerField()
+    host = models.CharField(max_length=128)
+    cpus = models.IntegerField()
 
     class Meta:
         managed = True
 
 # #################################################
-#  COMPUTE
+#  COMPUTESET
 # #################################################
 
-class Compute(object):
-    def __init__(self, cluster_id, compute_id):
-        self.name = compute_id
+class ComputeSet(models.Model):
+    state = models.CharField(max_length=128, default="queued")
+    computes = models.ManyToManyField(Compute)
+    cluster = models.ForeignKey(Cluster)
 
-    def poweron(self):
-        out, err = subprocess.Popen(['ssh', 'dimm@comet-fe1', '/opt/rocks/bin/rocks start host vm %s'%self.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-        return [out, err]
-        
-
-# #################################################
-#  CLUSTER
-# #################################################
-
-class Cluster(models.Model):
-    fe_name = models.CharField(max_length=100)
-    description = models.TextField(default="")
-    project = models.ForeignKey(django.contrib.auth.models.Group)
+    #@classmethod
+    #def create(cls):
+    #    cset = cls()
+    #    return cset
+ 
 
     class Meta:
         managed = True

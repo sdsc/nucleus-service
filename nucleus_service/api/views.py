@@ -2,17 +2,18 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from django.views.generic import DetailView, ListView
+from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.decorators import detail_route
 from models import *
 from serializers import *
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveAPIView
 
 
 from django.shortcuts import get_object_or_404
@@ -49,124 +50,132 @@ class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_id'
     serializer_class = ClusterSerializer
 
-    @asyncAction
-    def list(self, request, format=None):
-        """List the available clusters."""
-        user_groups = request.user.groups.all()
-        clusters = Cluster.objects.filter(project__in=user_groups)
-        return list_clusters.delay([cluster.fe_name for cluster in clusters])
-            
-    @asyncAction
+    def get_queryset(self):
+        clusters = Cluster.objects.filter(project__in=self.request.user.groups.all())
+        return clusters
+
+    #@asyncAction
     def retrieve(self, request, cluster_id, format=None):
         """Obtain details about the named cluster."""
         clust = get_object_or_404(Cluster, fe_name=cluster_id)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
-        return list_clusters.delay([cluster_id])
+        #return list_clusters.delay([cluster_id])
+        serializer = ClusterSerializer(clust)
+        return Response(serializer.data)
 
     def destroy(self, request, cluster_id, format=None):
         """Destroy the named cluster."""
         return Response("destroy todo")
 
-    @detail_route(methods=['post'])
-    def stop(self, request, cluster_id, format=None):
-        """Stop the named cluster."""
-        return Response("stop todo")
-    
-    @detail_route(methods=['post'])
-    def start(self, request, cluster_id, format=None):
-        """Start the named cluster."""
-        return Response("start todo")
-
 # #################################################
 #  COMPUTE
 # #################################################
 
-class ComputeViewSet(ModelViewSet):
+class ComputeViewSet(ViewSet):
     lookup_field = 'compute_id'
-    serializer_class = ComputeSerializer
 
-    def list(self, request, compute_id_cluster_id, format=None):
-        """List the compute resources of the named cluster."""
-        result = add.delay(1,3)
-        res_ar = [v for v in result.collect()]
-        return Response("todo %s"%res_ar)
-
-    def retrieve(self, request, compute_id, compute_id_cluster_id, format=None):
+    serializer_class = ClusterSerializer
+    def retrieve(self, request, compute_id, format=None):
         """Obtain the details of a named compute resource in a named cluster."""
-        return Response("todo")
+        compute = get_object_or_404(Compute, name=compute_id)
+        if(not compute.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+        serializer = ComputeSerializer(compute)
+        return Response(serializer.data)
 
-    def destroy(self, request, compute_id, compute_id_cluster_id, format=None):
+    def destroy(self, request, compute_id, format=None):
         """Destroy the named compute resource in a named cluster."""
         return Response("todo")
 
-    @detail_route(methods=['post'])
-    def shutdown(self, request, compute_id, compute_id_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def shutdown(self, request, compute_id, format=None):
         return Response("todo")
     
-    @detail_route(methods=['post'])
-    def reboot(self, request, compute_id, compute_id_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def reboot(self, request, compute_id, format=None):
         return Response("todo")
     
-    @detail_route(methods=['post'])
-    def reset(self, request, compute_id, compute_id_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def reset(self, request, compute_id, format=None):
         return Response("todo")
     
-    @detail_route(methods=['post'])
-    @asyncAction
-    def poweron(self, request, compute_id_cluster_id, format=None):
-        clust = get_object_or_404(Cluster, fe_name=compute_id_cluster_id)
-        if(not clust.project in request.user.groups.all()):
-            raise PermissionDenied()
-
-        nodes = []
-        hosts = []
-        for obj in request.data:
-            nodes.append(obj["node"])
-            hosts.append(obj["host"])
-        #compute_nodes = Compute(compute_id_cluster_id, compute_id)
-        #res, err = compute_nodes.poweron()
-        #job_id = random.randint(10000, 70000)
-        #Group.create(job_id).save()
-        #return Response("Done %s %s"%(nodes, hosts))
-        return poweron_nodes.delay(nodes, hosts) 
-
-    @detail_route(methods=['post'])
-    def poweroff(self, request, compute_id, compute_id_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def poweroff(self, request, compute_id, format=None):
         """Power off the named compute resource in a named cluster.
         """        
         return Response("todo")
     
-    def create(self, request, compute_id_cluster_id, format=None):
-        """Create a new compute resource in a named cluster."""        
-        # user = self.get_object(id)
-        # serializer = UserSerializer(user, data=request.data)
-        # if serializer.is_valid():
-        #    serializer.save()
-        #    return Response(serializer.data)
-        #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response("todo")
 
 # #################################################
-#  GROUP
+#  COMPUTESET
 # #################################################
 
-class GroupViewSet(ModelViewSet):
-    lookup_field = 'group_id'
-    serializer_class = GroupSerializer
+class ComputeSetViewSet(ModelViewSet):
+    lookup_field = 'computeset_id'
+    serializer_class = ComputeSetSerializer
 
-    def list(self, request, group_id_cluster_id, format=None):
-        """List the group resources of the named cluster."""
-        return Response("todo")
+    def get_queryset(self):
+        cset = ComputeSet.objects.filter(project__in=self.request.user.groups.all())
+        return cset
 
-    def retrieve(self, request, group_id, group_id_cluster_id, format=None):
-        """Obtain the details of a named group resource in a named cluster."""
-        group = Group(group_id_cluster_id, group_id)
-        return Response(GroupSerializer(group).data)
+    def retrieve(self, request, computeset_id, format=None):
+        cset = get_object_or_404(ComputeSet, pk=computeset_id)
+        if(not cset.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+        serializer = ComputeSetSerializer(cset)
+        return Response(serializer.data)
 
-    def destroy(self, request, group_id, group_id_cluster_id, format=None):
-        """Destroy the named group resource in a named cluster."""
-        return Response("todo")
+    @detail_route(methods=['put'])
+    def poweroff(self, request, computeset_id, format=None):
+        """Power off the named nodeset."""        
+        cset = ComputeSet.objects.get(pk=computeset_id)
+        cset.state = COMPUTESET_STATE_COMPLETED
+        cset.save()
+        serializer = ComputeSetSerializer(cset)
+        return Response(serializer.data)
+
+    def poweron(self, request, format=None):
+        """ Power on a set of nodes """
+        clust = get_object_or_404(Cluster, fe_name=request.data["cluster"])
+        if(not clust.project in request.user.groups.all()):
+            raise PermissionDenied()
+
+        cset = ComputeSet()
+        cset.cluster = clust
+        cset.save()
+
+        nodes = []
+        hosts = []
+        for obj in request.data["computes"]:
+            compute = Compute.objects.get(name=obj["name"])
+
+            other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(state__exact = COMPUTESET_STATE_COMPLETED)
+            if(other_cs_query.exists()):
+                cset.delete()
+                err_cs = other_cs_query.get()
+                return Response("The compute %s belongs to computeset %s which is in %s state"%(obj["name"], err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
+
+            if(compute.cluster.fe_name != request.data["cluster"]):
+                cset.delete()
+                return Response("The node %s does not belong to the cluster %s, belongs to %s"%(obj["name"], request.data["cluster"], compute.cluster.fe_name), status=status.HTTP_400_BAD_REQUEST)
+
+            nodes.append(obj["name"])
+            hosts.append(obj["host"])
+            cset.computes.add(compute)
+        cset.state = "started"
+        cset.save()
+
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! poweron_nodes.delay(nodes, hosts)
+
+        location = "/v1/computeset/%s"%(cset.id)
+
+        response = Response(
+            None, 
+            status=303,
+            headers={'Location': location})
+        return response
+
 
 # #################################################
 #  FRONTEND
@@ -179,50 +188,30 @@ class FrontendViewSet(ModelViewSet):
         """Obtain the details of a frontend resource in a named cluster."""
         return Response("todo")
 
-    @detail_route(methods=['post'])
-    def shutdown(self, request, nested_1_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def shutdown(self, request, frontend_cluster_id, format=None):
         """Shutdown the frontend of a named cluster."""
         return Response("todo")
     
-    @detail_route(methods=['post'])
-    def reboot(self, request, nested_1_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def reboot(self, request, frontend_cluster_id, format=None):
         """Reboot the frontend of a named cluster."""
         return Response("todo")
     
-    @detail_route(methods=['post'])
-    def reset(self, request, nested_1_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def reset(self, request, frontend_cluster_id, format=None):
         """Reset the frontend of a named cluster."""
         return Response("todo")
     
-    @detail_route(methods=['post'])
-    def poweron(self, request, nested_1_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def poweron(self, request, frontend_cluster_id, format=None):
         """Power on the frontend of a named cluster."""
         return Response("todo")
 
-    @detail_route(methods=['post'])
-    def poweroff(self, request, nested_1_cluster_id, format=None):
+    @detail_route(methods=['put'])
+    def poweroff(self, request, frontend_cluster_id, format=None):
         """Power off the frontend of a named cluster."""
         return Response("todo")
-
-# #################################################
-#  CLUSTERLIST
-# #################################################
-
-class ClusterList(APIView):
-    """
-    List all clusters, or create a new cluster.
-    """
-    def get(self, request, format=None):
-        clusters = Cluster.objects.all()
-        serializer = CLusterSerializer(clusters, many=True)
-        return Response(serializer.data)
-        
-    def post(self, request, format=None):
-        serializer = ClusterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # #################################################
 # CLUSTERDETAIL
@@ -317,30 +306,10 @@ class UserDetailsView(RetrieveUpdateAPIView):
 # #################################################
 
 
-class ProjectViewSet(ModelViewSet):
-    lookup_field = 'project_id'
+class ProjectListView(ListAPIView):
     serializer_class = ProjectSerializer
-
-    def list(self, request, format=None):
-        """
-        List all Projects that can create clusters.
-        We will investigate if django has already a project as part of user management.
-        """
-        queryset = Project.objects.all()
-        serializer = ProjectSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-        # return Response("todo")
-
-    def retrieve(self, request, project_id, format=None):
-        queryset = User.objects.all()
-        user = get_object_or_404(queryset, pk=pk)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-        # return Response("todo")
-
-    def destroy(self, request, project_id, format=None):
-        return Response("todo")
+    def get_queryset(self):
+        return self.request.user.groups.all()
 
 # #################################################
 #  CALL
