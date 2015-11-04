@@ -76,7 +76,7 @@ class ComputeViewSet(ViewSet):
     lookup_field = 'compute_id'
 
     serializer_class = ClusterSerializer
-    def retrieve(self, request, compute_id, format=None):
+    def retrieve(self, request, compute_id_cluster_id, compute_id, format=None):
         """Obtain the details of a named compute resource in a named cluster."""
         compute = get_object_or_404(Compute, name=compute_id)
         if(not compute.cluster.project in request.user.groups.all()):
@@ -84,28 +84,42 @@ class ComputeViewSet(ViewSet):
         serializer = ComputeSerializer(compute)
         return Response(serializer.data)
 
-    def destroy(self, request, compute_id, format=None):
+    def destroy(self, request, compute_id_cluster_id, compute_id, format=None):
         """Destroy the named compute resource in a named cluster."""
         return Response("todo")
 
     @detail_route(methods=['put'])
-    def shutdown(self, request, compute_id, format=None):
+    def shutdown(self, request, compute_id_cluster_id, compute_id, format=None):
         return Response("todo")
     
     @detail_route(methods=['put'])
-    def reboot(self, request, compute_id, format=None):
+    def reboot(self, request, compute_id_cluster_id, compute_id, format=None):
         return Response("todo")
     
     @detail_route(methods=['put'])
-    def reset(self, request, compute_id, format=None):
+    def reset(self, request, compute_id_cluster_id, compute_id, format=None):
         return Response("todo")
     
     @detail_route(methods=['put'])
-    def poweroff(self, request, compute_id, format=None):
+    def poweroff(self, request, compute_id_cluster_id, compute_id, format=None):
         """Power off the named compute resource in a named cluster.
         """        
         return Response("todo")
+    @detail_route(methods=['put'])
+
+    def poweron(self, request, compute_id_cluster_id, compute_id, format=None):
+        """Power on the named compute resource in a named cluster.
+        """        
+        return Response("todo")
     
+
+# #################################################
+#  CONSOLE
+# #################################################
+
+class ConsoleViewSet(ViewSet):
+    def retrieve(self, request, compute_id_cluster_id, console_compute_id, format=None):
+        return Response("todo")
 
 # #################################################
 #  COMPUTESET
@@ -176,7 +190,22 @@ class ComputeSetViewSet(ModelViewSet):
             headers={'Location': location})
         return response
 
-
+    @detail_route(methods=['put'])
+    def shutdown(self, request, computeset_id, format=None):
+        return Response("todo")
+    
+    @detail_route(methods=['put'])
+    def reboot(self, request, computeset_id, format=None):
+        return Response("todo")
+    
+    @detail_route(methods=['put'])
+    def reset(self, request, computeset_id, format=None):
+        return Response("todo")
+    
+    @detail_route(methods=['put'])
+    def poweroff(self, request, computeset_id, format=None):
+        return Response("todo")
+ 
 # #################################################
 #  FRONTEND
 # #################################################
@@ -311,37 +340,3 @@ class ProjectListView(ListAPIView):
     def get_queryset(self):
         return self.request.user.groups.all()
 
-# #################################################
-#  CALL
-# #################################################
-
-
-class CallViewSet(ModelViewSet):
-    lookup_field = 'call_id'
-    serializer_class = CallSerializer
-
-    def retrieve(self, request, call_id, format=None):
-        call = Call.objects.get(pk=call_id)
-        if(call.status < 1):
-            serializer = self.serializer_class(call)
-            return Response(serializer.data)
-
-        if(call.url):
-            location = call.url
-        else:
-            location = "/v1/call/%s/result"%(call_id)
-
-        response = Response(
-            "", 
-            status=303,
-            headers={'Location': location})
-        return response
- 
-
-    @detail_route(methods=['get'])
-    def result(self, request, call_id, format=None):
-        call = Call.objects.get(pk=call_id)
-        try:
-            return Response(json.loads(call.data))
-        except TypeError:
-            return Response(call.data)
