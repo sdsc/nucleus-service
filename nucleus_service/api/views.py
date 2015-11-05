@@ -182,7 +182,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! poweron_nodes.delay(nodes, hosts)
 
-        location = "/v1/computeset/%s"%(cset.id)
+        location = "/nucleus/v1/computeset/%s"%(cset.id)
 
         response = Response(
             None, 
