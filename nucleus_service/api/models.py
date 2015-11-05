@@ -13,7 +13,7 @@ COMPUTESET_STATE_COMPLETED = "completed"
 # #################################################
 
 class Cluster(models.Model):
-    fe_name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128)
     description = models.TextField(default="")
     project = models.ForeignKey(django.contrib.auth.models.Group)
 
@@ -49,6 +49,7 @@ class Frontend(models.Model):
 
 class Compute(models.Model):
     name = models.CharField(max_length=128)
+    rocks_name = models.CharField(max_length=128)
     cluster = models.ForeignKey(Cluster, related_name='computes')
     ip = models.GenericIPAddressField()
     memory = models.IntegerField()

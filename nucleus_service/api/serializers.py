@@ -31,31 +31,31 @@ class FrontendSerializer(serializers.ModelSerializer):
 
 class ComputeSerializer(serializers.ModelSerializer):
     #name = serializers.CharField(max_length=128)
-    cluster = serializers.SlugRelatedField(read_only=True, slug_field='fe_name')
+    cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
     class Meta:
         model = Compute
-        fields = ("name", "host", "ip", "memory", "cpus", "cluster")
+        fields = ("name", "rocks_name", "host", "ip", "memory", "cpus", "cluster")
         read_only_fields = ("ip", "memory", "cpus", "cluster")
         depth = 1
 
 class ComputeSetSerializer(serializers.ModelSerializer):
     computes=ComputeSerializer(many=True, read_only=True)
-    cluster = serializers.SlugRelatedField(read_only=True, slug_field='fe_name')
+    cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
     class Meta:
         model = ComputeSet
         fields = ['computes', 'id', 'state', 'cluster']
         read_only_fields = ('id', 'state', 'cluster')
 
 class ClusterSerializer(serializers.ModelSerializer):
-    fe_name = serializers.CharField(max_length=100)
+    name = serializers.CharField(max_length=100)
     description = serializers.CharField(default="")
     computes = ComputeSerializer(many=True, read_only=True)
     project=serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     class Meta:
         model = Cluster
-        fields = ('fe_name', 'description', 'computes', 'project')
-        read_only_fields = ('computes', 'fe_name')
+        fields = ('name', 'description', 'computes', 'project')
+        read_only_fields = ('computes', 'name')
 
 class StoragepoolSerializer(serializers.ModelSerializer):
     class Meta:

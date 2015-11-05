@@ -57,7 +57,7 @@ class ClusterViewSet(ModelViewSet):
     #@asyncAction
     def retrieve(self, request, cluster_id, format=None):
         """Obtain details about the named cluster."""
-        clust = get_object_or_404(Cluster, fe_name=cluster_id)
+        clust = get_object_or_404(Cluster, name=cluster_id)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         #return list_clusters.delay([cluster_id])
@@ -130,7 +130,7 @@ class ComputeSetViewSet(ModelViewSet):
     serializer_class = ComputeSetSerializer
 
     def get_queryset(self):
-        cset = ComputeSet.objects.filter(project__in=self.request.user.groups.all())
+        cset = ComputeSet.objects.filter(cluster__project__in=self.request.user.groups.all())
         return cset
 
     def retrieve(self, request, computeset_id, format=None):
@@ -151,7 +151,7 @@ class ComputeSetViewSet(ModelViewSet):
 
     def poweron(self, request, format=None):
         """ Power on a set of nodes """
-        clust = get_object_or_404(Cluster, fe_name=request.data["cluster"])
+        clust = get_object_or_404(Cluster, name=request.data["cluster"])
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
 
@@ -170,9 +170,9 @@ class ComputeSetViewSet(ModelViewSet):
                 err_cs = other_cs_query.get()
                 return Response("The compute %s belongs to computeset %s which is in %s state"%(obj["name"], err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
 
-            if(compute.cluster.fe_name != request.data["cluster"]):
+            if(compute.cluster.name != request.data["cluster"]):
                 cset.delete()
-                return Response("The node %s does not belong to the cluster %s, belongs to %s"%(obj["name"], request.data["cluster"], compute.cluster.fe_name), status=status.HTTP_400_BAD_REQUEST)
+                return Response("The node %s does not belong to the cluster %s, belongs to %s"%(obj["name"], request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
 
             nodes.append(obj["name"])
             hosts.append(obj["host"])
@@ -202,10 +202,6 @@ class ComputeSetViewSet(ModelViewSet):
     def reset(self, request, computeset_id, format=None):
         return Response("todo")
     
-    @detail_route(methods=['put'])
-    def poweroff(self, request, computeset_id, format=None):
-        return Response("todo")
- 
 # #################################################
 #  FRONTEND
 # #################################################
