@@ -86,6 +86,7 @@ WSGI_APPLICATION = 'nucleus.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+        'STORAGE_ENGINE': 'InnoDB',
         'OPTIONS': {'read_default_file': '/opt/rocks/etc/.nucleus.my.cnf'}
     }
 }
@@ -123,20 +124,17 @@ REST_FRAMEWORK = {
 }
 
 CELERY_ROUTES = (   
-                    {'api.tasks.list_clusters': 
-                        {
-                            'routing_key': 'comet-fe1'
-                        }
+                    {'api.tasks.poweron_nodeset': 
+                        {'routing_key': 'comet-fe1'}
                     },
                     {'api.tasks.poweron_nodes': 
-                        {
-                            'routing_key': 'comet-fe1'
-                        }
+                        {'routing_key': 'comet-fe1'}
                     },
-                    {'api.tasks.store_result': 
-                        {
-                            'routing_key': 'result'
-                        }
+                    {'api.tasks.poweroff_nodes': 
+                        {'routing_key': 'comet-fe1'}
+                    },
+                    {'api.tasks.update_clusters': 
+                        {'routing_key': 'update'}
                     }
                  )
 
@@ -144,8 +142,8 @@ CELERY_QUEUES = {
     'comet-fe1': {
         'binding_key': 'comet-fe1',
     },
-    'result': {
-        'binding_key': 'result',
+    'update': {
+        'binding_key': 'update',
     },
 }
 

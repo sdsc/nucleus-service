@@ -72,6 +72,12 @@ class ComputeSetRouter(SimpleRouter):
 
 class FrontendRouter(NestedSimpleRouter):
     routes = [
+        Route(
+           url=r'^{prefix}/$',
+           mapping={'get': 'retrieve'},
+           name='{basename}-detail',
+           initkwargs={'suffix': 'Detail'}
+        ),
         DynamicDetailRoute(
             url=r'^{prefix}/{methodname}$',
             name='{basename}-{methodname}',

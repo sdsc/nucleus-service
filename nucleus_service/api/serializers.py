@@ -20,22 +20,21 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = django.contrib.auth.models.Group
         fields = ['name']
 
-class StorageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Storage
-        fields = ['name']
-
 class FrontendSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Frontend
+        fields = ("name", "rocks_name", "state", "type")
+        read_only_fields = ("rocks_name", "state", "type")
+        depth = 1
 
 class ComputeSerializer(serializers.ModelSerializer):
     #name = serializers.CharField(max_length=128)
     cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
     class Meta:
         model = Compute
-        fields = ("name", "rocks_name", "host", "ip", "memory", "cpus", "cluster")
-        read_only_fields = ("ip", "memory", "cpus", "cluster")
+        fields = ("name", "rocks_name", "host", "ip", "memory", "cpus", "cluster", "type", "state")
+        read_only_fields = ("ip", "memory", "cpus", "cluster", "type", "state")
         depth = 1
 
 class ComputeSetSerializer(serializers.ModelSerializer):
@@ -50,19 +49,11 @@ class ClusterSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=100)
     description = serializers.CharField(default="")
     computes = ComputeSerializer(many=True, read_only=True)
+    frontend = FrontendSerializer(read_only=True)
     project=serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     class Meta:
         model = Cluster
-        fields = ('name', 'description', 'computes', 'project')
-        read_only_fields = ('computes', 'name')
+        fields = ('name', 'description', 'computes', 'frontend', 'project')
+        read_only_fields = ('computes', 'name', 'frontend')
 
-class StoragepoolSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Storagepool
-        fields = ['name']
-
-class CallSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Call
-        #fields = ['name']

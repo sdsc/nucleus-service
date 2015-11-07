@@ -9,39 +9,31 @@ COMPUTESET_STATE_QUEUED = "queued"
 COMPUTESET_STATE_COMPLETED = "completed"
 
 # #################################################
-#  CLUSTER
-# #################################################
-
-class Cluster(models.Model):
-    name = models.CharField(max_length=128)
-    description = models.TextField(default="")
-    project = models.ForeignKey(django.contrib.auth.models.Group)
-
-    class Meta:
-        managed = True
-
-
-# #################################################
-#  STORAGE
-# #################################################
-
-class Storage(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=100)
-
-    class Meta:
-        ordering = ('name',)
-
-# #################################################
 #  FRONTEND
 # #################################################
 
 class Frontend(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    #name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    rocks_name =  models.CharField(max_length=100, unique=True)
+    state = models.CharField(max_length=64, null=True)
+    type = models.CharField(max_length=16)
 
     class Meta:
-        pass
+        managed = True
+
+# #################################################
+#  CLUSTER
+# #################################################
+
+class Cluster(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    description = models.TextField(default="")
+    project = models.ForeignKey(django.contrib.auth.models.Group, null = True)
+    frontend = models.ForeignKey(Frontend, related_name='cluster')
+
+    class Meta:
+        managed = True
 
 # #################################################
 #  COMPUTE
@@ -49,12 +41,14 @@ class Frontend(models.Model):
 
 class Compute(models.Model):
     name = models.CharField(max_length=128)
-    rocks_name = models.CharField(max_length=128)
+    rocks_name = models.CharField(max_length=128, unique=True)
     cluster = models.ForeignKey(Cluster, related_name='computes')
-    ip = models.GenericIPAddressField()
-    memory = models.IntegerField()
-    host = models.CharField(max_length=128)
-    cpus = models.IntegerField()
+    ip = models.GenericIPAddressField(null=True)
+    memory = models.IntegerField(null=True)
+    host = models.CharField(max_length=128, null=True)
+    cpus = models.IntegerField(null=True)
+    state = models.CharField(max_length=64, null=True)
+    type = models.CharField(max_length=16)
 
     class Meta:
         managed = True
@@ -68,44 +62,7 @@ class ComputeSet(models.Model):
     computes = models.ManyToManyField(Compute)
     cluster = models.ForeignKey(Cluster)
 
-    #@classmethod
-    #def create(cls):
-    #    cset = cls()
-    #    return cset
- 
-
     class Meta:
         managed = True
-
-
-# #################################################
-#  STORAGEPOOL
-# #################################################
-
-class Storagepool(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=100)
-
-    class Meta:
-        ordering = ('name',)
-        
-# #################################################
-#  CALL
-# #################################################
-
-class Call(models.Model):
-        CALL_STATUS = (
-            (0, 'In progress'),
-            (1, 'Done'),
-            (2, 'Error')
-        )
-
-        created = models.DateTimeField(auto_now_add=True)
-        updated = models.DateTimeField(auto_now=True)
-        status = models.IntegerField(choices=CALL_STATUS)
-        call_id = models.CharField(max_length=128, primary_key=True)
-        data = models.TextField()
-        url = models.CharField(max_length=256, null=True)
-
 
 

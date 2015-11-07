@@ -4,59 +4,58 @@ from celery import shared_task, Task
 from subprocess import Popen, PIPE
 import json
 
-
-class CallbackTask(Task):
-    def on_success(self, retval, task_id, args, kwargs):
-        store_result.delay(task_id, retval)
-
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
-        pass
-
-
-@shared_task(base=CallbackTask, ignore_result=True)
-def poweron_nodes(nodes, hosts):
+@shared_task(ignore_result=True)
+def poweron_nodeset(nodes, hosts):
     args = ["/root/test/boot-these-nodes-on-these-hosts.sh", " ".join(nodes), " ".join(hosts)]
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
     return "%s\n%s"%(out, err)
- 
-@shared_task(base=CallbackTask, ignore_result=True)
-def list_clusters(cluster_id):
-    args = ["/opt/rocks/bin/rocks", "list", "cluster", "json=true"]
-    args.extend(cluster_id)
-    res = Popen(args, stdout=PIPE, stderr=PIPE)
-    out, err = res.communicate()
-    cluster_rocks_desc = json.loads(out)
-    result = []
-    
-    for record in cluster_rocks_desc:
-        if record['frontend']:
-            res_clust = {
-                'name':record['frontend'],
-                'frontend': record['frontend'],
-                'ip': 'TBD',
-                'clients': []
-            }
-        else:
-            res_clust['clients'] = [ 
-                    {
-                        'name': client['client nodes'],
-                        'ip': 'TBD',
-                        'type': client['type']
-                    } for client in record["cluster"]
-                ]
-            result.append(res_clust)
-    return result
 
 @shared_task(ignore_result=True)
-def store_result(task_id, result):
-    from api.models import Call
-    cur_call = Call.objects.get(pk = task_id)
-    try:
-        cur_call.data = json.dumps(result)
-    except TypeError:
-        cur_call.data = str(result)
-    cur_call.status = 1
-    cur_call.save()
+def poweroff_nodes(nodes, action):
+    args = ["/opt/rocks/bin/rocks", "stop", "host", "vm", " ".join(nodes), "action=%s"%action]
+    res = Popen(args, stdout=PIPE, stderr=PIPE)
+    out, err = res.communicate()
+    return "%s\n%s"%(out, err)
 
+@shared_task(ignore_result=True)
+def poweron_nodes(nodes):
+    args = ["/opt/rocks/bin/rocks", "start", "host", "vm", " ".join(nodes)]
+    res = Popen(args, stdout=PIPE, stderr=PIPE)
+    out, err = res.communicate()
+    return "%s\n%s"%(out, err)
+ 
+@shared_task(ignore_result=True)
+def update_clusters(clusters_json):
+    from api.models import Cluster, Frontend, Compute
+    for cluster_rocks in clusters_json:
+        try:
+            cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
+            frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
+            if(frontend.state != cluster_rocks["state"]):
+                frontend.state = cluster_rocks["state"]
+                frontend.save()
+        except Cluster.DoesNotExist:
+            frontend = Frontend()
+            frontend.name = cluster_rocks["frontend"]
+            frontend.rocks_name = cluster_rocks["frontend"]
+            frontend.state = cluster_rocks["state"]
+            frontend.type = cluster_rocks["type"]
+            frontend.save()
 
+            cluster_obj = Cluster()
+            cluster_obj.name = cluster_rocks["frontend"]
+            cluster_obj.frontend = frontend
+            cluster_obj.save()
+
+        for compute_rocks in cluster_rocks["computes"]:
+            compute_obj, created = Compute.objects.get_or_create(rocks_name = compute_rocks["name"], cluster = cluster_obj)
+            if(created):
+                compute_obj.name = compute_rocks["name"]
+                compute_obj.state = compute_rocks["state"]
+                compute_obj.type = compute_rocks["type"]
+                compute_obj.save()
+            elif(compute_obj.state != compute_rocks["state"]):
+                compute_obj.state = compute_rocks["state"]
+                compute_obj.save()
+                
