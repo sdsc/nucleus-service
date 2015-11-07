@@ -89,7 +89,7 @@ class FrontendRouter(NestedSimpleRouter):
 router = ClusterRouter()
 router.register(r'^', views.ClusterViewSet, base_name='cluster')
 
-compute_router = ComputeRouter(router, r"^", lookup="compute_id")
+compute_router = ComputeRouter(router, r"^", lookup="compute_name")
 compute_router.register(r'compute', views.ComputeViewSet, base_name='cluster-compute')
 
 compute_console_router = ConsoleRouter(compute_router, r"compute", lookup="console")
