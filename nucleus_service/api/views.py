@@ -34,22 +34,22 @@ import json
 # #################################################
        
 class ClusterViewSet(ModelViewSet):
-    lookup_field = 'cluster_id'
+    lookup_field = 'cluster_name'
     serializer_class = ClusterSerializer
 
     def get_queryset(self):
         clusters = Cluster.objects.filter(project__in=self.request.user.groups.all())
         return clusters
 
-    def retrieve(self, request, cluster_id, format=None):
+    def retrieve(self, request, cluster_name, format=None):
         """Obtain details about the named cluster."""
-        clust = get_object_or_404(Cluster, name=cluster_id)
+        clust = get_object_or_404(Cluster, name=cluster_name)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         serializer = ClusterSerializer(clust)
         return Response(serializer.data)
 
-    def destroy(self, request, cluster_id, format=None):
+    def destroy(self, request, cluster_name, format=None):
         """Destroy the named cluster."""
         return Response("destroy todo")
 
@@ -58,46 +58,46 @@ class ClusterViewSet(ModelViewSet):
 # #################################################
 
 class ComputeViewSet(ViewSet):
-    lookup_field = 'compute_id'
+    lookup_field = 'compute_name'
 
     serializer_class = ClusterSerializer
-    def retrieve(self, request, compute_id_cluster_id, compute_id, format=None):
+    def retrieve(self, request, compute_name_cluster_name, compute_name, format=None):
         """Obtain the details of a named compute resource in a named cluster."""
-        compute = get_object_or_404(Compute, name=compute_id, cluster__name = compute_id_cluster_id)
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         serializer = ComputeSerializer(compute)
         return Response(serializer.data)
 
-    def destroy(self, request, compute_id_cluster_id, compute_id, format=None):
+    def destroy(self, request, compute_name_cluster_name, compute_name, format=None):
         """Destroy the named compute resource in a named cluster."""
         return Response("todo")
 
     @detail_route(methods=['put'])
-    def shutdown(self, request, compute_id_cluster_id, compute_id, format=None):
-        compute = get_object_or_404(Compute, name=compute_id, cluster__name = compute_id_cluster_id)
+    def shutdown(self, request, compute_name_cluster_name, compute_name, format=None):
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
         return Response(None)
     
     @detail_route(methods=['put'])
-    def reboot(self, request, compute_id_cluster_id, compute_id, format=None):
-        compute = get_object_or_404(Compute, name=compute_id, cluster__name = compute_id_cluster_id)
+    def reboot(self, request, compute_name_cluster_name, compute_name, format=None):
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reboot")
         return Response(None)
     
     @detail_route(methods=['put'])
-    def reset(self, request, compute_id_cluster_id, compute_id, format=None):
+    def reset(self, request, compute_name_cluster_name, compute_name, format=None):
         return Response("todo")
     
     @detail_route(methods=['put'])
-    def poweroff(self, request, compute_id_cluster_id, compute_id, format=None):
+    def poweroff(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power off the named compute resource in a named cluster.
         """        
-        compute = get_object_or_404(Compute, name=compute_id, cluster__name = compute_id_cluster_id)
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "poweroff")
@@ -105,10 +105,10 @@ class ComputeViewSet(ViewSet):
 
     @detail_route(methods=['put'])
 
-    def poweron(self, request, compute_id_cluster_id, compute_id, format=None):
+    def poweron(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power on the named compute resource in a named cluster.
         """        
-        compute = get_object_or_404(Compute, name=compute_id, cluster__name = compute_id_cluster_id)
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([compute.rocks_name])
@@ -120,7 +120,7 @@ class ComputeViewSet(ViewSet):
 # #################################################
 
 class ConsoleViewSet(ViewSet):
-    def retrieve(self, request, compute_id_cluster_id, console_compute_id, format=None):
+    def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
         return Response("todo")
 
 # #################################################
@@ -211,92 +211,54 @@ class ComputeSetViewSet(ModelViewSet):
 class FrontendViewSet(ViewSet):
     #serializer_class = FrontendSerializer
 
-    def retrieve(self, request, frontend_cluster_id, format=None):
+    def retrieve(self, request, frontend_cluster_name, format=None):
         """Obtain the details of a frontend resource in a named cluster."""
-        clust = get_object_or_404(Cluster, name=frontend_cluster_id)
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         serializer = FrontendSerializer(clust.frontend)
         return Response(serializer.data)
 
     @detail_route(methods=['put'])
-    def shutdown(self, request, frontend_cluster_id, format=None):
+    def shutdown(self, request, frontend_cluster_name, format=None):
         """Shutdown the frontend of a named cluster."""
-        clust = get_object_or_404(Cluster, name=frontend_cluster_id)
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "shutdown")
         return Response(None)
     
     @detail_route(methods=['put'])
-    def reboot(self, request, frontend_cluster_id, format=None):
+    def reboot(self, request, frontend_cluster_name, format=None):
         """Reboot the frontend of a named cluster."""
-        clust = get_object_or_404(Cluster, name=frontend_cluster_id)
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "reboot")
         return Response(None)
     
     @detail_route(methods=['put'])
-    def reset(self, request, frontend_cluster_id, format=None):
+    def reset(self, request, frontend_cluster_name, format=None):
         """Reset the frontend of a named cluster."""
         return Response("todo")
     
     @detail_route(methods=['put'])
-    def poweron(self, request, frontend_cluster_id, format=None):
+    def poweron(self, request, frontend_cluster_name, format=None):
         """Power on the frontend of a named cluster."""
-        clust = get_object_or_404(Cluster, name=frontend_cluster_id)
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([clust.frontend.rocks_name])
         return Response(None)
 
     @detail_route(methods=['put'])
-    def poweroff(self, request, frontend_cluster_id, format=None):
+    def poweroff(self, request, frontend_cluster_name, format=None):
         """Power off the frontend of a named cluster."""
-        clust = get_object_or_404(Cluster, name=frontend_cluster_id)
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "poweroff")
         return Response(None)
-
-# #################################################
-# CLUSTERDETAIL
-# #################################################
-
-class ClusterDetail(APIView):
-    """
-    Retrieve, update or delete a cluster instance.
-    """
-    def get_object(self, id):
-        try:
-           return Cluster.objects.get(id=id)
-        except Cluster.DoesNotExist:
-           raise Http404
-
-    def start(self, id):
-        return Response("start")
-    
-    def get(self, request, id, format=None):
-        cluster = self.get_object(id)
-        serializer = ClusterSerializer(cluster)
-        return Response(serializer.data)
-
-    @detail_route(methods=['post'])
-    def shutdown(self, request, compute_id, compute_id_cluster_id, format=None):
-        return Response("todo")
-    
-    @detail_route(methods=['post'])
-    def reset(self, request, compute_id, compute_id_cluster_id, format=None):
-        return Response("todo")
-    
-    @detail_route(methods=['post'])
-    def start(self, request, compute_id, compute_id_cluster_id, format=None):
-        return Response("todo")
-
-    @detail_route(methods=['post'])
-    def stop(self, request, compute_id, compute_id_cluster_id, format=None):
-        return Response("todo")
 
 # #################################################
 #  USER
