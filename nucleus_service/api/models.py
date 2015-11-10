@@ -7,6 +7,7 @@ import subprocess
 
 COMPUTESET_STATE_QUEUED = "queued"
 COMPUTESET_STATE_COMPLETED = "completed"
+COMPUTESET_STATE_STARTED = "started"
 
 # #################################################
 #  FRONTEND

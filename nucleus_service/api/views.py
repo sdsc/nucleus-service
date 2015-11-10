@@ -27,7 +27,7 @@ from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 import time
 import json
-
+import hostlist
 
 # #################################################
 #  CLUSTER
@@ -91,7 +91,11 @@ class ComputeViewSet(ViewSet):
     
     @detail_route(methods=['put'])
     def reset(self, request, compute_name_cluster_name, compute_name, format=None):
-        return Response("todo")
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        if(not compute.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+        poweroff_nodes.delay([compute.rocks_name], "reset")
+        return Response(None)
     
     @detail_route(methods=['put'])
     def poweroff(self, request, compute_name_cluster_name, compute_name, format=None):
@@ -133,6 +137,10 @@ class ComputeSetViewSet(ModelViewSet):
 
     def get_queryset(self):
         cset = ComputeSet.objects.filter(cluster__project__in=self.request.user.groups.all())
+
+        state = self.request.query_params.get('state', None)
+        if state is not None:
+            cset = cset.filter(state=state)
         return cset
 
     def retrieve(self, request, computeset_id, format=None):
@@ -146,10 +154,16 @@ class ComputeSetViewSet(ModelViewSet):
     def poweroff(self, request, computeset_id, format=None):
         """Power off the named nodeset."""        
         cset = ComputeSet.objects.get(pk=computeset_id)
-        cset.state = COMPUTESET_STATE_COMPLETED
-        cset.save()
-        serializer = ComputeSetSerializer(cset)
-        return Response(serializer.data)
+        if(not cset.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+
+        computes = []
+        for compute in cset.computes.all():
+            computes.append(compute.rocks_name)
+
+        poweroff_nodes.delay(computes, "poweroff")
+
+        return Response(None)
 
     def poweron(self, request, format=None):
         """ Power on a set of nodes """
@@ -157,29 +171,42 @@ class ComputeSetViewSet(ModelViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
 
+
+        nodes = []
+        hosts = []
+
+        if(request.data["computes"] is list):
+            for obj in request.data["computes"]:
+                nodes.append(obj["name"])
+                hosts.append(obj["host"])
+        else:
+            nodes = hostlist.expand_hostlist("%s"%request.data["computes"])
+            if(request.data.get("hosts")):
+                hosts = hostlist.expand_hostlist("%s"%request.data["hosts"])
+
+        if(hosts and len(nodes) != len(hosts)):
+            return Response("The length of hosts should be equal to length of nodes", status=status.HTTP_400_BAD_REQUEST)
+            
         cset = ComputeSet()
         cset.cluster = clust
         cset.save()
 
-        nodes = []
-        hosts = []
-        for obj in request.data["computes"]:
-            compute = Compute.objects.get(name=obj["name"])
+        for node in nodes:
+            compute = Compute.objects.get(name=node, cluster=clust)
 
             other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(state__exact = COMPUTESET_STATE_COMPLETED)
             if(other_cs_query.exists()):
                 cset.delete()
                 err_cs = other_cs_query.get()
-                return Response("The compute %s belongs to computeset %s which is in %s state"%(obj["name"], err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
+                return Response("The compute %s belongs to computeset %s which is in %s state"%(node, err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
 
             if(compute.cluster.name != request.data["cluster"]):
                 cset.delete()
-                return Response("The node %s does not belong to the cluster %s, belongs to %s"%(obj["name"], request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
+                return Response("The node %s does not belong to the cluster %s, belongs to %s"%(node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
 
-            nodes.append(obj["name"])
-            hosts.append(obj["host"])
             cset.computes.add(compute)
-        cset.state = "started"
+
+        cset.state = COMPUTESET_STATE_QUEUED
         cset.save()
 
         poweron_nodeset.delay(nodes, hosts)
@@ -194,22 +221,51 @@ class ComputeSetViewSet(ModelViewSet):
 
     @detail_route(methods=['put'])
     def shutdown(self, request, computeset_id, format=None):
-        return Response("todo")
-    
+        cset = ComputeSet.objects.get(pk=computeset_id)
+        if(not cset.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+
+        computes = []
+        for compute in cset.computes.all():
+            computes.append(compute.rocks_name)
+
+        poweroff_nodes.delay(computes, "shutdown")
+
+        return Response(None)
+
     @detail_route(methods=['put'])
     def reboot(self, request, computeset_id, format=None):
-        return Response("todo")
+        cset = ComputeSet.objects.get(pk=computeset_id)
+        if(not cset.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+
+        computes = []
+        for compute in cset.computes.all():
+            computes.append(compute.rocks_name)
+
+        poweroff_nodes.delay(computes, "reboot")
+
+        return Response(None)
     
     @detail_route(methods=['put'])
     def reset(self, request, computeset_id, format=None):
-        return Response("todo")
+        cset = ComputeSet.objects.get(pk=computeset_id)
+        if(not cset.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+
+        computes = []
+        for compute in cset.computes.all():
+            computes.append(compute.rocks_name)
+
+        poweroff_nodes.delay(computes, "reset")
+
+        return Response(None)
     
 # #################################################
 #  FRONTEND
 # #################################################
        
 class FrontendViewSet(ViewSet):
-    #serializer_class = FrontendSerializer
 
     def retrieve(self, request, frontend_cluster_name, format=None):
         """Obtain the details of a frontend resource in a named cluster."""
