@@ -20,21 +20,36 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = django.contrib.auth.models.Group
         fields = ['name']
 
+class FrontendInterfaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FrontendInterface
+        fields = ("ip", "mac")
+        read_only_fields = ("ip", "mac")
+        depth = 1
+
 class FrontendSerializer(serializers.ModelSerializer):
 
+    interface=FrontendInterfaceSerializer(many=True, read_only=True)
     class Meta:
         model = Frontend
-        fields = ("name", "rocks_name", "state", "type")
-        read_only_fields = ("rocks_name", "state", "type")
+        fields = ("name", "state", "memory", "cpus", "type", "interface")
+        read_only_fields = ("state", "memory", "cpus", "type", "interface")
+        depth = 1
+
+class ComputeInterfaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComputeInterface
+        fields = ("ip", "mac")
+        read_only_fields = ("ip", "mac")
         depth = 1
 
 class ComputeSerializer(serializers.ModelSerializer):
-    #name = serializers.CharField(max_length=128)
     cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    interface=ComputeInterfaceSerializer(many=True, read_only=True)
     class Meta:
         model = Compute
-        fields = ("name", "rocks_name", "host", "ip", "memory", "cpus", "cluster", "type", "state")
-        read_only_fields = ("ip", "memory", "cpus", "cluster", "type", "state")
+        fields = ("name", "interface", "memory", "cpus", "cluster", "type", "state")
+        read_only_fields = ("interface", "memory", "cpus", "cluster", "type", "state")
         depth = 1
 
 class ComputeSetSerializer(serializers.ModelSerializer):

@@ -17,9 +17,18 @@ class Frontend(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=100)
     rocks_name =  models.CharField(max_length=100, unique=True)
+    cpus = models.IntegerField(null=True)
+    memory = models.IntegerField(null=True)
     state = models.CharField(max_length=64, null=True)
     type = models.CharField(max_length=16)
 
+    class Meta:
+        managed = True
+
+class FrontendInterface(models.Model):
+    ip = models.GenericIPAddressField(default='0.0.0.0',null=True)
+    mac = models.CharField(max_length=17,default='', unique=True)
+    frontend = models.ForeignKey(Frontend, related_name='interface')
     class Meta:
         managed = True
 
@@ -44,13 +53,19 @@ class Compute(models.Model):
     name = models.CharField(max_length=128)
     rocks_name = models.CharField(max_length=128, unique=True)
     cluster = models.ForeignKey(Cluster, related_name='computes')
-    ip = models.GenericIPAddressField(null=True)
-    memory = models.IntegerField(null=True)
     host = models.CharField(max_length=128, null=True)
     cpus = models.IntegerField(null=True)
+    memory = models.IntegerField(null=True)
     state = models.CharField(max_length=64, null=True)
     type = models.CharField(max_length=16)
 
+    class Meta:
+        managed = True
+
+class ComputeInterface(models.Model):
+    ip = models.GenericIPAddressField(default='0.0.0.0',null=True)
+    mac = models.CharField(max_length=17,default='', unique=True)
+    compute = models.ForeignKey(Compute, related_name='interface')
     class Meta:
         managed = True
 

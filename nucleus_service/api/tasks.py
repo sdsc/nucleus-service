@@ -45,19 +45,23 @@ def poweron_nodes(nodes):
 
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
-    from api.models import Cluster, Frontend, Compute, ComputeSet, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
+    from api.models import Cluster, Frontend, Compute, ComputeSet, FrontendInterface, ComputeInterface, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
     for cluster_rocks in clusters_json:
         try:
             cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
             frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
-            if(frontend.state != cluster_rocks["state"]):
+            if(frontend.state != cluster_rocks["state"] or frontend.memory != cluster_rocks["mem"] or frontend.cpus != cluster_rocks["cpus"]):
                 frontend.state = cluster_rocks["state"]
+                frontend.memory = cluster_rocks["mem"]
+                frontend.cpus = cluster_rocks["cpus"]
                 frontend.save()
         except Cluster.DoesNotExist:
             frontend = Frontend()
             frontend.name = cluster_rocks["frontend"]
             frontend.rocks_name = cluster_rocks["frontend"]
             frontend.state = cluster_rocks["state"]
+            frontend.memory = cluster_rocks["mem"]
+            frontend.cpus = cluster_rocks["cpus"]
             frontend.type = cluster_rocks["type"]
             frontend.save()
 
@@ -66,15 +70,25 @@ def update_clusters(clusters_json):
             cluster_obj.frontend = frontend
             cluster_obj.save()
 
+        cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
+        frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
+        for interface in cluster_rocks['interfaces']:
+            if(interface["mac"]):
+                if_obj, created = FrontendInterface.objects.update_or_create(frontend = frontend, ip = interface["ip"], mac = interface["mac"])
+
         for compute_rocks in cluster_rocks["computes"]:
             compute_obj, created = Compute.objects.get_or_create(rocks_name = compute_rocks["name"], cluster = cluster_obj)
             if(created):
                 compute_obj.name = compute_rocks["name"]
                 compute_obj.state = compute_rocks["state"]
+                compute_obj.memory = compute_rocks["mem"]
+                compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.type = compute_rocks["type"]
                 compute_obj.save()
-            elif(compute_obj.state != compute_rocks["state"]):
+            elif(compute_obj.state != compute_rocks["state"] or compute_obj.memory != compute_rocks["mem"] or compute_obj.cpus != compute_rocks["cpus"]):
                 compute_obj.state = compute_rocks["state"]
+                compute_obj.memory = compute_rocks["mem"]
+                compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.save()
                 try:
                     cs = ComputeSet.objects.get(computes__id__exact=compute_obj.id, state__in=[COMPUTESET_STATE_QUEUED, COMPUTESET_STATE_STARTED])
@@ -88,3 +102,9 @@ def update_clusters(clusters_json):
                     print "Computeset for compute %s not found"%compute_obj.name
                 except:
                     print traceback.format_exc()
+
+            for interface in compute_rocks['interfaces']:
+                if(interface["mac"]):
+                    if_obj, created = ComputeInterface.objects.update_or_create(compute = compute_obj, ip = interface["ip"], mac = interface["mac"])
+
+
