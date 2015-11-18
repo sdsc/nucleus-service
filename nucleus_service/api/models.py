@@ -82,3 +82,10 @@ class ComputeSet(models.Model):
         managed = True
 
 
+class NucleusUser(models.Model):
+    key_name = models.CharField(max_length=128, primary_key=True)
+    user = models.OneToOneField(django.contrib.auth.models.User, related_name='api_key')
+    secret = models.TextField()
+
+    class Meta:
+        managed = True

@@ -24,7 +24,6 @@ SECRET_KEY = 'qy4-11q&&19jaz!dwn7mk6r#zh+=iiprtzxn^@698$t*e(+f%#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
 
 
@@ -39,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_httpsignature',
     'api',
     'rest_framework_swagger',
     'rest_auth'
@@ -112,7 +112,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
        'rest_framework.authentication.BasicAuthentication',
        'rest_framework.authentication.SessionAuthentication',
-       'rest_framework.authentication.TokenAuthentication'
+       'rest_framework.authentication.TokenAuthentication',
+       'api.auth.NucleusAPISignatureAuthentication'
     ),
     'DEFAULT_PERMISSION_CLASSES': (
        'rest_framework.permissions.IsAuthenticated',
