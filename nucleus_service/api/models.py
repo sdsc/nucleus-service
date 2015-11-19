@@ -89,3 +89,9 @@ class NucleusUser(models.Model):
 
     class Meta:
         managed = True
+
+class Nonce(models.Model):
+    nonce = models.CharField(max_length=128, primary_key=True)
+    timestamp = models.IntegerField()
+    class Meta:
+        managed = True
