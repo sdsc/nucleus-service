@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveAPIView
 
+import subprocess
 
 from django.shortcuts import get_object_or_404
 
@@ -28,6 +29,7 @@ from celery.result import AsyncResult
 import time
 import json
 import hostlist
+import os,sys
 
 # #################################################
 #  CLUSTER
@@ -79,7 +81,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
-        return Response(None)
+        return Response(status=204)
     
     @detail_route(methods=['put'])
     def reboot(self, request, compute_name_cluster_name, compute_name, format=None):
@@ -87,7 +89,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reboot")
-        return Response(None)
+        return Response(status=204)
     
     @detail_route(methods=['put'])
     def reset(self, request, compute_name_cluster_name, compute_name, format=None):
@@ -95,7 +97,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reset")
-        return Response(None)
+        return Response(status=204)
     
     @detail_route(methods=['put'])
     def poweroff(self, request, compute_name_cluster_name, compute_name, format=None):
@@ -105,7 +107,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "poweroff")
-        return Response(None)
+        return Response(status=204)
 
     @detail_route(methods=['put'])
 
@@ -116,18 +118,107 @@ class ComputeViewSet(ViewSet):
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([compute.rocks_name])
-        return Response(None)
+        return Response(status=204)
     
 
 # #################################################
 #  CONSOLE
-# #################################################
+##################################################
+
+def get_console(console_compute_name):
+    resp = "Success"
+    sleep_time = 15
+
+    # Set random VNC password for guest valid for sleep_time
+    cmd = ['/usr/bin/sudo',
+            '-u',
+            'nucleus_comet',
+            '/home/nucleus_comet/bin/set_vnc_passwd.py',
+            '-G',
+            '{guest}'.format(guest=console_compute_name),
+            '-s',
+            '{duration}'.format(duration=sleep_time)]
+    try:
+            retcode = subprocess.call(cmd)
+            if retcode < 0:
+                    resp = "Child was terminated by signal %d" % (-retcode)
+                    return Response(resp)
+
+    except OSError as e:
+            resp = "Execution failed: %s" % (e)
+            return Response(resp)
+
+
+    # Get VNC connection params...
+    cmd = ['/usr/bin/sudo',
+            '-u',
+            'nucleus_comet',
+            '/home/nucleus_comet/bin/get_vnc_params.py',
+            '-G',
+            '{guest}'.format(guest=console_compute_name)]
+    try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
+    except OSError as e:
+            resp = "Execution failed: %s" % (e)
+            return Response(resp)
+
+    params = ''
+    for line in iter(proc.stdout.readline,''):
+            import re
+            params += line.rstrip().strip()
+
+    vnc_conn = json.loads(params)[0]["vnc"][0]
+    (phys_host, passwd, port) = (vnc_conn["phys-host"], vnc_conn["password"], vnc_conn["port"])
+
+    
+    # Open tunnel from localhost -> phys-host:port...
+    cmd = ['/usr/bin/sudo',
+            '-u',
+            'nucleus_comet',
+            '/home/nucleus_comet/bin/open_tunnel.py',
+            '-H',
+            '{hostname}'.format(hostname=phys_host),
+            '-p',
+            '{hostport}'.format(hostport=port),
+            '-s',
+            '{duration}'.format(duration=sleep_time)]
+
+    try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
+    except OSError as e:
+            resp = "Execution failed: %s" % (e)
+            return Response(resp)
+
+    tun_port = ''
+
+    tun_port = proc.stdout.readline().strip()
+    url_base = "https://comet-nucleus.sdsc.edu/nucleus-guacamole/index.html?hostname=localhost"
+    url = "%s&port=%s&password=%s" % (url_base, tun_port, passwd)
+
+    response = Response(
+        url,
+        status=303,
+        headers={'Location': url})
+    return response
 
 class ConsoleViewSet(ViewSet):
     def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
-        return Response("todo")
+        compute = get_object_or_404(Compute, name=console_compute_name, cluster__name = compute_name_cluster_name)
+        if(not compute.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+        return get_console(console_compute_name)
 
-# #################################################
+class FrontendConsoleViewSet(ViewSet):
+    def retrieve(self, request, console_cluster_name, format=None):
+        clust = get_object_or_404(Cluster, name=console_cluster_name)
+        if(not clust.project in request.user.groups.all()):
+            raise PermissionDenied()
+        return get_console(clust.frontend.rocks_name)
+
+
+##################################################
 #  COMPUTESET
 # #################################################
 
@@ -163,7 +254,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "poweroff")
 
-        return Response(None)
+        return Response(status=204)
 
     def poweron(self, request, format=None):
         """ Power on a set of nodes """
@@ -213,9 +304,11 @@ class ComputeSetViewSet(ModelViewSet):
 
         location = "/nucleus/v1/computeset/%s"%(cset.id)
 
+        serializer = ComputeSetSerializer(cset)
+
         response = Response(
-            None, 
-            status=303,
+            serializer.data,
+            status=201,
             headers={'Location': location})
         return response
 
@@ -231,7 +324,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "shutdown")
 
-        return Response(None)
+        return Response(status=204)
 
     @detail_route(methods=['put'])
     def reboot(self, request, computeset_id, format=None):
@@ -245,7 +338,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "reboot")
 
-        return Response(None)
+        return Response(status=204)
     
     @detail_route(methods=['put'])
     def reset(self, request, computeset_id, format=None):
@@ -259,7 +352,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "reset")
 
-        return Response(None)
+        return Response(status=204)
     
 # #################################################
 #  FRONTEND
@@ -282,7 +375,7 @@ class FrontendViewSet(ViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "shutdown")
-        return Response(None)
+        return Response(status=204)
     
     @detail_route(methods=['put'])
     def reboot(self, request, frontend_cluster_name, format=None):
@@ -291,7 +384,7 @@ class FrontendViewSet(ViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "reboot")
-        return Response(None)
+        return Response(status=204)
     
     @detail_route(methods=['put'])
     def reset(self, request, frontend_cluster_name, format=None):
@@ -305,7 +398,7 @@ class FrontendViewSet(ViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([clust.frontend.rocks_name])
-        return Response(None)
+        return Response(status=204)
 
     @detail_route(methods=['put'])
     def poweroff(self, request, frontend_cluster_name, format=None):
@@ -314,7 +407,7 @@ class FrontendViewSet(ViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "poweroff")
-        return Response(None)
+        return Response(status=204)
 
 # #################################################
 #  USER

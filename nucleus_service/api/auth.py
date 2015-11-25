@@ -38,11 +38,8 @@ class NucleusAPISignatureAuthentication(SignatureAuthentication):
 
         ts_diff = int(time.time()) - int(ts)
 
-        if(ts_diff > self.TIME_BACK):
-            raise exceptions.AuthenticationFailed('Timestamp is too far back in past. Last 30 minutes is allowed.')
-
-        if(ts_diff < -1):
-            raise exceptions.AuthenticationFailed('Timestamp can not be in future')
+        if(abs(ts_diff) > self.TIME_BACK):
+            raise exceptions.AuthenticationFailed('Timestamp is more than %s minutes different from the server.'%TIME_BACK)
 
         try:
             nonce = Nonce(nonce = nonce, timestamp = ts)
