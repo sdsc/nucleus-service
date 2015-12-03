@@ -14,7 +14,7 @@ version:
 	python -c "import django; print(django.get_version())"
 
 worker-fe1:
-	cd nucleus_service; celery -A nucleus -B -l debug -Q comet-fe1 worker
+	cd nucleus_service; celery -A nucleus -c 2 -B -l debug -Q comet-fe1 worker
 
 worker-result:
-	cd nucleus_service; celery -A nucleus -B -l debug -Q result worker
+	cd nucleus_service; celery -A nucleus -c 2 -B -l debug -Q result worker
