@@ -29,6 +29,10 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+CSRF_COOKIE_AGE = 600
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = True
+
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',

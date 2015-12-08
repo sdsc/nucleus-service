@@ -169,6 +169,7 @@ def get_console(console_compute_name):
             params += line.rstrip().strip()
 
     vnc_conn = json.loads(params)[0]["vnc"][0]
+    #return Response(params)
     (phys_host, passwd, port) = (vnc_conn["phys-host"], vnc_conn["password"], vnc_conn["port"])
 
     

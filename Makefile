@@ -16,5 +16,5 @@ version:
 worker-fe1:
 	cd nucleus_service; celery -A nucleus -B -l debug -Q comet-fe1 worker
 
-worker-result:
-	cd nucleus_service; celery -A nucleus -B -l debug -Q result worker
+worker-update:
+	cd nucleus_service; celery -A nucleus --detach -Q update worker
