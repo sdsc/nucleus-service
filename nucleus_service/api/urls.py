@@ -131,7 +131,8 @@ urlpatterns = patterns(
     #
     # Projects
     #
-    url(r'^project', views.ProjectListView.as_view(), name='rest_user_projects')
+    url(r'^project', views.ProjectListView.as_view(), name='rest_user_projects'),
+    url(r'^image', views.ImageUploadView.as_view(), name='rest_images')
 )
 
 

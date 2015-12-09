@@ -13,7 +13,9 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.parsers import FileUploadParser
+
+from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView
 
 import subprocess
 
@@ -30,6 +32,9 @@ import time
 import json
 import hostlist
 import os,sys
+
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 # #################################################
 #  CLUSTER
@@ -441,4 +446,16 @@ class ProjectListView(ListAPIView):
     serializer_class = ProjectSerializer
     def get_queryset(self):
         return self.request.user.groups.all()
+
+
+class ImageUploadView(APIView):
+    parser_classes = (FileUploadParser,)
+
+    def post(self, request, format=None):
+        groups = request.user.groups.all()
+        file_obj = request.FILES['file']
+        #filepath = '/mnt/images/%s/%s'%(groups[0].name, file_obj.name)
+        filepath = '/tmp/%s'%(file_obj.name)
+        path = default_storage.save(filepath, ContentFile(file_obj.read()))
+        return Response(status=204)
 
