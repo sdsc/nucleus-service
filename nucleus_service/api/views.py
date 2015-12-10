@@ -31,7 +31,7 @@ from celery.result import AsyncResult
 import time
 import json
 import hostlist
-import os,sys
+import os,sys,hashlib
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -115,7 +115,6 @@ class ComputeViewSet(ViewSet):
         return Response(status=204)
 
     @detail_route(methods=['put'])
-
     def poweron(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power on the named compute resource in a named cluster.
         """        
@@ -123,6 +122,19 @@ class ComputeViewSet(ViewSet):
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([compute.rocks_name])
+        return Response(status=204)
+    
+
+    @detail_route(methods=['put'])
+    def attach_iso(self, request, compute_name_cluster_name, compute_name, format=None):
+        """Attach an ISO to the named compute resource in a named cluster.
+        """        
+        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        if(not compute.cluster.project in request.user.groups.all()):
+            raise PermissionDenied()
+        if(not request.GET["iso_name"]):
+            return Response("Please provide the iso_name", status=400)
+        attach_iso.delay([compute.rocks_name], request.PUT["iso_name"])
         return Response(status=204)
     
 
@@ -359,7 +371,7 @@ class ComputeSetViewSet(ModelViewSet):
         poweroff_nodes.delay(computes, "reset")
 
         return Response(status=204)
-    
+
 # #################################################
 #  FRONTEND
 # #################################################
@@ -455,7 +467,20 @@ class ImageUploadView(APIView):
         groups = request.user.groups.all()
         file_obj = request.FILES['file']
         #filepath = '/mnt/images/%s/%s'%(groups[0].name, file_obj.name)
-        filepath = '/tmp/%s'%(file_obj.name)
-        path = default_storage.save(filepath, ContentFile(file_obj.read()))
+        filepath = '/mnt/images/public/%s'%(file_obj.name)
+        if(not request.META.get('HTTP_MD5')):
+            return Response("md5 was not provided", status=400)
+
+        if(request.META['HTTP_MD5'] != md5_for_file(file_obj.chunks())):
+            return Response("md5 does not match the file", status=400)
+            
+        with open(filepath, 'wb+') as destination:
+            for chunk in file_obj.chunks():
+                destination.write(chunk)
         return Response(status=204)
 
+def md5_for_file(chunks):
+    md5 = hashlib.md5()
+    for data in chunks:
+        md5.update(data)
+    return md5.hexdigest()
