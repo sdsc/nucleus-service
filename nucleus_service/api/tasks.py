@@ -103,6 +103,46 @@ def poweron_nodes(nodes):
     return "%s\n%s"%(out, err)
 
 @shared_task(ignore_result=True)
+def update_computesetjob(cset_job_json):
+    from api.models import ComputeSet, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
+    from api.models import ComputeSetJob, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
+    from api.serializers import ComputeSerializer
+    import hostlist
+
+    cset = ComputeSet.objects.get(
+        id__exact=cset_job_json['id'],
+        state__in=[COMPUTESET_STATE_QUEUED]
+    )
+
+    try:
+        cset_job = ComputeSetJob.objects.get(computeset_id = cset.id)
+        if (cset_job.state != cset_job_json['state']):
+            cset_job.state = cset_job_json['state']
+            cset_job.save()
+
+        serializer = ComputeSerializer(cset.computes)
+        nodes = hostlist.expand_hostlist("%s" % serializer.data)
+
+        if (cset_job.['state'] == CSETJOB_STATE_RUNNING):
+            # Hosts have been allocated to the job and the jobscript has passed
+            # the PROLOG barrier. All nodes can be powered on
+            cset_job.nodelist = cset_job_json['nodelist']
+            hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
+            # This is where we need to assign VLAN's to switchports using
+            # hosts to map into the switches model
+            poweron_nodeset.delay(nodes, hosts)
+
+        if (cset_job.['state'] == CSETJOB_STATE_COMPLETED):
+            # Job has reached the EPILOG (cancelled or signalled to end)
+            # We need to shutdown the nodes
+            cset_job.nodelist = cset_job_json['nodelist']
+            hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
+            poweroff_nodes.delay(nodes, "shutdown")
+            # Not sure if we should remove the VLAN's on switchports for
+            # hosts here yet but, if we should, this is where it could be done
+
+
+@shared_task(ignore_result=True)
 def update_clusters(clusters_json):
     from api.models import Cluster, Frontend, Compute, ComputeSet, FrontendInterface, ComputeInterface, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
     for cluster_rocks in clusters_json:
