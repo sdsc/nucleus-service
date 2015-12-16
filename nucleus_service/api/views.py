@@ -280,6 +280,10 @@ class ComputeSetViewSet(ModelViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
 
+        walltime_mins = request.data["walltime_mins"]
+        if(not walltime_mins):
+            return Response("You must provide a walltime (minutes) value.",
+                status=status.HTTP_400_BAD_REQUEST)
 
         nodes = []
         hosts = []
@@ -315,19 +319,49 @@ class ComputeSetViewSet(ModelViewSet):
 
             cset.computes.add(compute)
 
-        cset.state = COMPUTESET_STATE_QUEUED
-        cset.save()
+        cset_job = ComputeSetJob()
+        cset_job.computeset_id = cset.id
+        cset_job.user = self.request.get_username()
+        cset_job.account = clust.project
+        cset_job.walltime_mins = walltime_mins
+        cset_job.id = None
+        cset_job.name = None
+        cset_job.hostlist = None
+        cset_job.state = CSETJOB_STATE_SUBMITTED
 
-        poweron_nodeset.delay(nodes, hosts)
+        async_result = submit_computeset_job.delay(json_dumps(cset_job))
+        json_result = async_result.get()
 
-        location = "/nucleus/v1/computeset/%s"%(cset.id)
+        submit_result = json.loads(json_result)
 
-        serializer = ComputeSetSerializer(cset)
+        cset_job.id = submit_result['id']
+        cset_job.name = submit_result['name']
+        cset_job.state = submit_result['state']
 
-        response = Response(
-            serializer.data,
-            status=201,
-            headers={'Location': location})
+        if cset_job.state is CSETJOB_STATE_FAILED:
+            cset.delete()
+            msg = "The computeset for cluster %s could not be started. %s" %
+                (request.data['cluster'], submit_result['error'])
+            return Response(msg, status=status.HTTP_500_SERVER_ERROR)
+        else:
+            cset_job.save()
+            cset.state = COMPUTESET_STATE_QUEUED
+            cset.save()
+
+            # We should only poweron computes after entering jobscript and
+            # finishing the PROLOG on all allocated nodes. At that point the
+            # nodelist will be returned and we can call poweron_nodeset()
+            #poweron_nodeset.delay(nodes, hosts)
+
+            location = "/nucleus/v1/computeset/%s"%(cset.id)
+
+            serializer = ComputeSetSerializer(cset)
+
+            response = Response(
+                serializer.data,
+                status=201,
+                headers={'Location': location})
+
         return response
 
     @detail_route(methods=['put'])
