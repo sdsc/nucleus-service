@@ -6,6 +6,65 @@ import json
 import sys, traceback
 
 @shared_task(ignore_result=True)
+def submit(self, cset_job_json):
+    cset_job = json.loads(cset_job_json)
+
+    cset_job['name'] = "VC-JOB-%s-%s" % (cset_job['computeset_id'],
+        str(self.request.id).replace('-',''))
+    cset_job['id'] = None
+    cset_job['error'] = None
+
+    # There are a number of potentilly configurable parameters in the following call
+    # to sbatch..
+    #
+    # workdir=/tmp will leave the job .out file on the EXEC_HOST in /tmp
+    # partition=virt will submit jobs to the virt partition
+    # signal=B:USR1@60 will send a USR1 signal to the batch script running on the
+    # EXEC_HOST. The signal will be caught by the signal_handler and the jobscript
+    # should request shutdown of the virtual compute nodes.
+    #
+    # All other parameters should be considered UNCHANGABLE.
+
+    cmd = ['/usr/bin/timeout',
+        '2',
+        '/usr/bin/sbatch',
+        '--job-name=%s' % (cset_job['name']),
+        '--output=%s.out' % (cset_job['name']),
+        '--workdir=/tmp',
+        '--parsable',
+        '--partition=virt',
+        '--nodes=%s-%s' % (cset_job['nodes'], cset_job['nodes']),
+        '--ntasks-per-node=1',
+        '--cpus-per-task=24',
+        '--signal=B:USR1@60',
+        '--time=%s' % (cset_job['walltime_mins']),
+        '/etc/slurm/VC-JOB.run',
+        '%s' % (cset_job['walltime_mins'])]
+
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
+    except OSError as e:
+        cset_job['state'] = CSETJOB_STATE_FAILED
+        cset_job['error'] = e
+
+    except subprocess.CalledProcessError as e:
+        cset_job['state'] = CSETJOB_STATE_FAILED
+        if e.returncode == 124:
+            # This can/will happen if slurmctld does not respond to the sbatch request
+            # Standard timeout is ~9s and 'nominal' response seems to be less than
+            # 1s on unloaded slurmctld.
+            cset_job['error'] = "sbatch: error: timeout during request"
+        else:
+            cset_job['error'] = e.output.strip().rstrip()
+
+    else:
+        cset_job['state'] = CSETJOB_STATE_SUBMITTED
+        cset_job['id'] = output.rstrip().strip()
+
+    return json.dumps(cset_job)
+
+@shared_task(ignore_result=True)
 def poweron_nodeset(nodes, hosts):
     if(hosts and (len(nodes) != len(hosts))):
         print "hosts length is not equal to nodes"
