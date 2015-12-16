@@ -70,16 +70,8 @@ class ComputeInterface(models.Model):
         managed = True
 
 # #################################################
-#  COMPUTESET
+#  NUCLEUSUSER
 # #################################################
-
-class ComputeSet(models.Model):
-    state = models.CharField(max_length=128, default="queued")
-    computes = models.ManyToManyField(Compute)
-    cluster = models.ForeignKey(Cluster)
-
-    class Meta:
-        managed = True
 
 class NucleusUser(models.Model):
     key_name = models.CharField(max_length=128, primary_key=True)
@@ -89,9 +81,25 @@ class NucleusUser(models.Model):
     class Meta:
         managed = True
 
+# #################################################
+#  NONCE
+# #################################################
+
 class Nonce(models.Model):
     nonce = models.CharField(max_length=128, primary_key=True)
     timestamp = models.IntegerField()
+    class Meta:
+        managed = True
+
+# #################################################
+#  COMPUTESET
+# #################################################
+
+class ComputeSet(models.Model):
+    state = models.CharField(max_length=128, default="queued")
+    computes = models.ManyToManyField(Compute)
+    cluster = models.ForeignKey(Cluster)
+
     class Meta:
         managed = True
 
@@ -119,4 +127,3 @@ class ComputeSetJob(models.Model):
 
     class Meta:
         managed = True
-
