@@ -81,31 +81,6 @@ class ComputeSet(models.Model):
     class Meta:
         managed = True
 
-class ComputeSetJob(models.Model):
-    CSETJOB_STATE_SUBMITTED = 'submitted'
-    CSETJOB_STATE_FAILED = 'failed'
-    CSETJOB_STATE_RUNNING = 'running'
-    CSETJOB_STATE_COMPLETED = 'completed'
-    CSETJOB_STATES = (
-        (CSETJOB_STATE_SUBMITTED, 'Submitted'),
-        (CSETJOB_STATE_FAILED), 'Failed'),
-        (CSETJOB_STATE_RUNNING, 'Running'),
-        (CSETJOB_STATE_COMPLETED, 'Completed'),
-    )
-    computeset_id = models.OneToOneField(ComputeSet, related_name='id')
-    id = models.CharField(max_length=12, unique=True)
-    name = models.CharField(max_length=64, unique=True)
-    user = models.OneToOneField(NucleusUser, related_name='user')
-    account = models.OneToOneField(Cluster, related_name='project')
-    walltime_mins = models.IntegerField()
-    nodelist = models.CharField(max_length=256, null=True)
-    state = models.CharField(max_length=12,
-                choices=CSETJOB_STATES,
-                default=CSETJOB_STATE_SUBMITTED)
-
-    class Meta:
-        managed = True
-
 class NucleusUser(models.Model):
     key_name = models.CharField(max_length=128, primary_key=True)
     user = models.OneToOneField(django.contrib.auth.models.User, related_name='api_key')
@@ -119,3 +94,29 @@ class Nonce(models.Model):
     timestamp = models.IntegerField()
     class Meta:
         managed = True
+
+class ComputeSetJob(models.Model):
+    CSETJOB_STATE_SUBMITTED = 'submitted'
+    CSETJOB_STATE_FAILED = 'failed'
+    CSETJOB_STATE_RUNNING = 'running'
+    CSETJOB_STATE_COMPLETED = 'completed'
+    CSETJOB_STATES = (
+        (CSETJOB_STATE_SUBMITTED, 'Submitted'),
+        (CSETJOB_STATE_FAILED, 'Failed'),
+        (CSETJOB_STATE_RUNNING, 'Running'),
+        (CSETJOB_STATE_COMPLETED, 'Completed'),
+    )
+    id = models.PositiveIntegerField(primary_key=True)
+    computeset = models.ForeignKey(ComputeSet, related_name='computesetjob')
+    name = models.CharField(max_length=64, unique=True)
+    user = models.ForeignKey(NucleusUser)
+    account = models.ForeignKey(django.contrib.auth.models.Group)
+    walltime_mins = models.PositiveIntegerField()
+    nodelist = models.TextField(null=True)
+    state = models.CharField(max_length=128,
+        choices=CSETJOB_STATES,
+        default=CSETJOB_STATE_SUBMITTED)
+
+    class Meta:
+        managed = True
+
