@@ -39,7 +39,7 @@ from django.core.files.storage import default_storage
 # #################################################
 #  CLUSTER
 # #################################################
-       
+
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_name'
     serializer_class = ClusterSerializer
@@ -87,7 +87,7 @@ class ComputeViewSet(ViewSet):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
         return Response(status=204)
-    
+
     @detail_route(methods=['put'])
     def reboot(self, request, compute_name_cluster_name, compute_name, format=None):
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
@@ -95,7 +95,7 @@ class ComputeViewSet(ViewSet):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reboot")
         return Response(status=204)
-    
+
     @detail_route(methods=['put'])
     def reset(self, request, compute_name_cluster_name, compute_name, format=None):
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
@@ -103,11 +103,11 @@ class ComputeViewSet(ViewSet):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reset")
         return Response(status=204)
-    
+
     @detail_route(methods=['put'])
     def poweroff(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power off the named compute resource in a named cluster.
-        """        
+        """
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -117,18 +117,18 @@ class ComputeViewSet(ViewSet):
     @detail_route(methods=['put'])
     def poweron(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power on the named compute resource in a named cluster.
-        """        
+        """
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([compute.rocks_name])
         return Response(status=204)
-    
+
 
     @detail_route(methods=['put'])
     def attach_iso(self, request, compute_name_cluster_name, compute_name, format=None):
         """Attach an ISO to the named compute resource in a named cluster.
-        """        
+        """
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -136,7 +136,7 @@ class ComputeViewSet(ViewSet):
             return Response("Please provide the iso_name", status=400)
         attach_iso.delay([compute.rocks_name], request.PUT["iso_name"])
         return Response(status=204)
-    
+
 
 # #################################################
 #  CONSOLE
@@ -189,7 +189,7 @@ def get_console(console_compute_name):
     #return Response(params)
     (phys_host, passwd, port) = (vnc_conn["phys-host"], vnc_conn["password"], vnc_conn["port"])
 
-    
+
     # Open tunnel from localhost -> phys-host:port...
     cmd = ['/usr/bin/sudo',
             '-u',
@@ -261,7 +261,7 @@ class ComputeSetViewSet(ModelViewSet):
 
     @detail_route(methods=['put'])
     def poweroff(self, request, computeset_id, format=None):
-        """Power off the named nodeset."""        
+        """Power off the named nodeset."""
         cset = ComputeSet.objects.get(pk=computeset_id)
         if(not cset.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -299,7 +299,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         if(hosts and len(nodes) != len(hosts)):
             return Response("The length of hosts should be equal to length of nodes", status=status.HTTP_400_BAD_REQUEST)
-            
+
         cset = ComputeSet()
         cset.cluster = clust
         cset.save()
@@ -391,7 +391,7 @@ class ComputeSetViewSet(ModelViewSet):
         poweroff_nodes.delay(computes, "reboot")
 
         return Response(status=204)
-    
+
     @detail_route(methods=['put'])
     def reset(self, request, computeset_id, format=None):
         cset = ComputeSet.objects.get(pk=computeset_id)
@@ -409,7 +409,7 @@ class ComputeSetViewSet(ModelViewSet):
 # #################################################
 #  FRONTEND
 # #################################################
-       
+
 class FrontendViewSet(ViewSet):
 
     def retrieve(self, request, frontend_cluster_name, format=None):
@@ -428,7 +428,7 @@ class FrontendViewSet(ViewSet):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "shutdown")
         return Response(status=204)
-    
+
     @detail_route(methods=['put'])
     def reboot(self, request, frontend_cluster_name, format=None):
         """Reboot the frontend of a named cluster."""
@@ -437,12 +437,12 @@ class FrontendViewSet(ViewSet):
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "reboot")
         return Response(status=204)
-    
+
     @detail_route(methods=['put'])
     def reset(self, request, frontend_cluster_name, format=None):
         """Reset the frontend of a named cluster."""
         return Response("todo")
-    
+
     @detail_route(methods=['put'])
     def poweron(self, request, frontend_cluster_name, format=None):
         """Power on the frontend of a named cluster."""
@@ -507,7 +507,7 @@ class ImageUploadView(APIView):
 
         if(request.META['HTTP_MD5'] != md5_for_file(file_obj.chunks())):
             return Response("md5 does not match the file", status=400)
-            
+
         with open(filepath, 'wb+') as destination:
             for chunk in file_obj.chunks():
                 destination.write(chunk)

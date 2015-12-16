@@ -205,5 +205,3 @@ def update_clusters(clusters_json):
             for interface in compute_rocks['interfaces']:
                 if(interface["mac"]):
                     if_obj, created = ComputeInterface.objects.update_or_create(compute = compute_obj, ip = interface["ip"], mac = interface["mac"])
-
-
