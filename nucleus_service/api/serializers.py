@@ -68,7 +68,7 @@ class ComputeSetJobSerializer(serializers.ModelSerializer):
     account = serializers.SlugRelatedField(read_only=True, slug_field='name')
     walltime_mins = serializers.IntegerField()
     nodelist = serializers.CharField(allow_null=True)
-    state = serializers.ChoiceField(max_length=128)
+    state = serializers.ChoiceField(ComputeSetJob.CSETJOB_STATES)
     class Meta:
         model = ComputeSetJob
         fields = ['id', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'state']
