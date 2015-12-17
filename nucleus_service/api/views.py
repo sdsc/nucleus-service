@@ -329,7 +329,8 @@ class ComputeSetViewSet(ModelViewSet):
         cset_job.hostlist = None
         cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
 
-        async_result = submit_computesetjob.delay(json.dumps(cset_job))
+        serializer = ComputeSetJobSerializer(cset_job)
+        async_result = submit_computesetjob.delay(serializer.data)
         json_result = async_result.get()
 
         submit_result = json.loads(json_result)
