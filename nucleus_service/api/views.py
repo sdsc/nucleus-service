@@ -21,7 +21,7 @@ import subprocess
 
 from django.shortcuts import get_object_or_404
 
-from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes
+from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computesetjob
 import random
 
 from functools import wraps
@@ -321,15 +321,15 @@ class ComputeSetViewSet(ModelViewSet):
 
         cset_job = ComputeSetJob()
         cset_job.computeset_id = cset.id
-        cset_job.user = self.request.get_username()
+        cset_job.user = self.request.user.api_key
         cset_job.account = clust.project
         cset_job.walltime_mins = walltime_mins
         cset_job.id = None
         cset_job.name = None
         cset_job.hostlist = None
-        cset_job.state = CSETJOB_STATE_SUBMITTED
+        cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
 
-        async_result = submit_computeset_job.delay(json_dumps(cset_job))
+        async_result = submit_computesetjob.delay(json.dumps(cset_job))
         json_result = async_result.get()
 
         submit_result = json.loads(json_result)
@@ -338,9 +338,9 @@ class ComputeSetViewSet(ModelViewSet):
         cset_job.name = submit_result['name']
         cset_job.state = submit_result['state']
 
-        if cset_job.state is CSETJOB_STATE_FAILED:
+        if cset_job.state is ComputeSetJob.CSETJOB_STATE_FAILED:
             cset.delete()
-            msg = "The computeset for cluster %s could not be started. %s" %
+            msg = "The computeset for cluster %s could not be started. %s" % \
                 (request.data['cluster'], submit_result['error'])
             return Response(msg, status=status.HTTP_500_SERVER_ERROR)
         else:

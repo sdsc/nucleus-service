@@ -6,7 +6,9 @@ import json
 import sys, traceback
 
 @shared_task(ignore_result=True)
-def submit(self, cset_job_json):
+def submit_computesetjob(self, cset_job_json):
+    from api.models import ComputeSetJob
+
     cset_job = json.loads(cset_job_json)
 
     cset_job['name'] = "VC-JOB-%s-%s" % (cset_job['computeset_id'],
@@ -45,11 +47,11 @@ def submit(self, cset_job_json):
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
     except OSError as e:
-        cset_job['state'] = CSETJOB_STATE_FAILED
+        cset_job['state'] = ComputeSetJob.CSETJOB_STATE_FAILED
         cset_job['error'] = e
 
     except subprocess.CalledProcessError as e:
-        cset_job['state'] = CSETJOB_STATE_FAILED
+        cset_job['state'] = ComputeSetJob.CSETJOB_STATE_FAILED
         if e.returncode == 124:
             # This can/will happen if slurmctld does not respond to the sbatch request
             # Standard timeout is ~9s and 'nominal' response seems to be less than
@@ -59,7 +61,7 @@ def submit(self, cset_job_json):
             cset_job['error'] = e.output.strip().rstrip()
 
     else:
-        cset_job['state'] = CSETJOB_STATE_SUBMITTED
+        cset_job['state'] = ComputeSetJob.CSETJOB_STATE_SUBMITTED
         cset_job['id'] = output.rstrip().strip()
 
     return json.dumps(cset_job)
@@ -105,7 +107,7 @@ def poweron_nodes(nodes):
 @shared_task(ignore_result=True)
 def update_computesetjob(cset_job_json):
     from api.models import ComputeSet, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
-    from api.models import ComputeSetJob, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
+    from api.models import ComputeSetJob
     from api.serializers import ComputeSerializer
     import hostlist
 
@@ -123,7 +125,7 @@ def update_computesetjob(cset_job_json):
         serializer = ComputeSerializer(cset.computes)
         nodes = hostlist.expand_hostlist("%s" % serializer.data)
 
-        if (cset_job.['state'] == CSETJOB_STATE_RUNNING):
+        if (cset_job.state == ComputeSetJob.CSETJOB_STATE_RUNNING):
             # Hosts have been allocated to the job and the jobscript has passed
             # the PROLOG barrier. All nodes can be powered on
             cset_job.nodelist = cset_job_json['nodelist']
@@ -132,7 +134,7 @@ def update_computesetjob(cset_job_json):
             # hosts to map into the switches model
             poweron_nodeset.delay(nodes, hosts)
 
-        if (cset_job.['state'] == CSETJOB_STATE_COMPLETED):
+        if (cset_job.state == ComputeSetJob.CSETJOB_STATE_COMPLETED):
             # Job has reached the EPILOG (cancelled or signalled to end)
             # We need to shutdown the nodes
             cset_job.nodelist = cset_job_json['nodelist']
@@ -141,6 +143,8 @@ def update_computesetjob(cset_job_json):
             # Not sure if we should remove the VLAN's on switchports for
             # hosts here yet but, if we should, this is where it could be done
 
+    except Exception:
+        pass
 
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
