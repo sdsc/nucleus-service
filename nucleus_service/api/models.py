@@ -124,7 +124,7 @@ class ComputeSetJob(models.Model):
     jobid = models.PositiveIntegerField(unique=True, null=True)
     computeset = models.ForeignKey(ComputeSet, related_name='computesetjob')
     name = models.CharField(max_length=64, unique=True)
-    user = models.ForeignKey(NucleusUser)
+    user = models.ForeignKey(django.contrib.auth.models.User)
     account = models.ForeignKey(django.contrib.auth.models.Group)
     walltime_mins = models.PositiveIntegerField()
     nodelist = models.TextField(null=True)

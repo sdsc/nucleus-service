@@ -64,7 +64,7 @@ class ComputeSetJobSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     computeset = serializers.SlugRelatedField(read_only=True, slug_field='id')
     name = serializers.CharField(max_length=64, allow_null=True)
-    user = serializers.SlugRelatedField(read_only=True, slug_field='api_key')
+    user = serializers.SlugRelatedField(read_only=True, slug_field='username')
     account = serializers.SlugRelatedField(read_only=True, slug_field='name')
     walltime_mins = serializers.IntegerField()
     nodelist = serializers.CharField(allow_null=True)
