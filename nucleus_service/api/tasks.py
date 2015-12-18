@@ -7,14 +7,23 @@ import sys, traceback
 
 @shared_task(ignore_result=True)
 def submit_computesetjob(self, cset_job_json):
-    from api.models import ComputeSetJob
+    """ This task runs on comet-fe1 therefore database updates can ONLY occur
+        using update_computesetjob() which will run on comet-nucleus
+    """
+    import logging
+    from api.models import ComputeSetJob, CSETJOB_STATE_SUBMITTED, CSETJOB_STATE_FAILED, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
+    from api.serializers import ComputeSetJobSerializer
+
+    FORMAT = "%(asctime)-15s %(computeset)s %(error)s %(message)s"
+    logging.basicConfig(level=logging.INFO, format=FORMAT)
+    logger = logging.getLogger(__name__)
 
     cset_job = json.loads(cset_job_json)
 
-    cset_job['name'] = "VC-JOB-%s-%s" % (cset_job['computeset_id'],
+    cset_job["name"] = "VC-JOB-%s-%s" % (cset_job["computeset_id"],
         str(self.request.id).replace('-',''))
-    cset_job['id'] = None
-    cset_job['error'] = None
+    cset_job["jobid"] = None
+    cset_job["error"] = None
 
     # There are a number of potentilly configurable parameters in the following call
     # to sbatch..
@@ -45,26 +54,85 @@ def submit_computesetjob(self, cset_job_json):
 
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        cset_job["jobid"] = output.rstrip().strip()
+        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_SUBMITTED
+        serializer = ComputeSetJobSerializer(cset_job)
+        update_computesetjob.delay(serializer.data)
 
     except OSError as e:
-        cset_job['state'] = ComputeSetJob.CSETJOB_STATE_FAILED
-        cset_job['error'] = e
+        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
+        d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
+        logger.error("OSError: %s", e.output.strip(), extra=d)
 
     except subprocess.CalledProcessError as e:
-        cset_job['state'] = ComputeSetJob.CSETJOB_STATE_FAILED
+        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
         if e.returncode == 124:
-            # This can/will happen if slurmctld does not respond to the sbatch request
-            # Standard timeout is ~9s and 'nominal' response seems to be less than
-            # 1s on unloaded slurmctld.
-            cset_job['error'] = "sbatch: error: timeout during request"
+            d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
+            logger.error("CalledProcessError: Timeout during request: %s", e.output.strip().rstrip(), extra=d)
         else:
-            cset_job['error'] = e.output.strip().rstrip()
+            d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
+            logger.error("CalledProcessError: %s", e.output.strip().rstrip(), extra=d)
 
-    else:
-        cset_job['state'] = ComputeSetJob.CSETJOB_STATE_SUBMITTED
-        cset_job['id'] = output.rstrip().strip()
 
-    return json.dumps(cset_job)
+@shared_task(ignore_result=True)
+def update_computesetjob(cset_job_json):
+    """ This task runs on comet-nucleus and can update the database """
+    from api.models import ComputeSet
+    from api.models import ComputeSetJob, CSETJOB_STATE_SUBMITTED, CSETJOB_STATE_FAILED, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
+    import hostlist
+
+    try:
+        cset_job = ComputeSetJob.objects.get(jobid = cset_job_json["jobid"])
+
+        if (
+            cset_job.jobid != cset_job_json["id"] or
+            cset_job.nodelist != cset_job_json["nodelist"] or
+            ):
+            cset_job.jobid = cset_job["jobid"]
+            cset_job.nodelist = cset_job["nodelist"]
+            cset_job.save()
+
+        if (cset_job.state != cset_job_json["state"]):
+            old_cset_job_state = cset_job.state
+            cset_job.state = cset_job_json["state"]
+            cset_job.save()
+
+            cset = cset_job.computesetjob
+
+            # Job passed from QUEUED to RUNNING state...
+            if (
+                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_QUEUED and
+                cset_job.state == ComputeSetJob.CSETJOB_STATE_RUNNING
+                ):
+                if cset_job.nodelist is not None:
+                    nodes = [compute['name'] for compute in cset.computes]
+                    hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
+                    # TODO: vlan & switchport configuration
+                    poweron_nodeset.delay(nodes, hosts)
+
+            # Job passed from QUEUED to COMPLETED state directly...
+            if (
+                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_QUEUED and
+                cset_job.state == ComputeSetJob.CSETJOB_STATE_COMPLETED
+                ):
+                if cset_job.nodelist is not None:
+                    hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
+                    # TODO: anything else todo?
+
+            # Job passed from RUNNING to COMPLETED state...
+            if (
+                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_RUNNING and
+                cset_job.state == ComputeSetJob.CSETJOB_STATE_COMPLETED
+                ):
+                if cset_job.nodelist is not None:
+                    nodes = [compute['name'] for compute in cset.computes]
+                    poweroff_nodes.delay(nodes, "shutdown")
+                    # TODO: vlan & switchport de-configuration
+
+    except: ComputeSetJob.DoesNotExist:
+        cset_job = None
+        d = {'computeset': cset_job_json["id"], 'error': ComputeSetJob.DoesNotExist}
+        logger.error("update_computesetjob: %s", "ComputeSetJob does not exist", extra=d)
 
 @shared_task(ignore_result=True)
 def poweron_nodeset(nodes, hosts):
@@ -103,48 +171,6 @@ def poweron_nodes(nodes):
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
     return "%s\n%s"%(out, err)
-
-@shared_task(ignore_result=True)
-def update_computesetjob(cset_job_json):
-    from api.models import ComputeSet, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
-    from api.models import ComputeSetJob
-    from api.serializers import ComputeSerializer
-    import hostlist
-
-    cset = ComputeSet.objects.get(
-        id__exact=cset_job_json['id'],
-        state__in=[COMPUTESET_STATE_QUEUED]
-    )
-
-    try:
-        cset_job = ComputeSetJob.objects.get(computeset_id = cset.id)
-        if (cset_job.state != cset_job_json['state']):
-            cset_job.state = cset_job_json['state']
-            cset_job.save()
-
-        serializer = ComputeSerializer(cset.computes)
-        nodes = hostlist.expand_hostlist("%s" % serializer.data)
-
-        if (cset_job.state == ComputeSetJob.CSETJOB_STATE_RUNNING):
-            # Hosts have been allocated to the job and the jobscript has passed
-            # the PROLOG barrier. All nodes can be powered on
-            cset_job.nodelist = cset_job_json['nodelist']
-            hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
-            # This is where we need to assign VLAN's to switchports using
-            # hosts to map into the switches model
-            poweron_nodeset.delay(nodes, hosts)
-
-        if (cset_job.state == ComputeSetJob.CSETJOB_STATE_COMPLETED):
-            # Job has reached the EPILOG (cancelled or signalled to end)
-            # We need to shutdown the nodes
-            cset_job.nodelist = cset_job_json['nodelist']
-            hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
-            poweroff_nodes.delay(nodes, "shutdown")
-            # Not sure if we should remove the VLAN's on switchports for
-            # hosts here yet but, if we should, this is where it could be done
-
-    except Exception:
-        pass
 
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
