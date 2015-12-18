@@ -330,38 +330,21 @@ class ComputeSetViewSet(ModelViewSet):
         cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
 
         serializer = ComputeSetJobSerializer(cset_job)
-        async_result = submit_computesetjob.delay(serializer.data)
-        json_result = async_result.get()
+        submit_computesetjob.delay(serializer.data)
 
-        submit_result = json.loads(json_result)
+        # We should only poweron computes after entering jobscript and
+        # finishing the PROLOG on all allocated nodes. At that point the
+        # nodelist will be returned and we can call poweron_nodeset()
+        #poweron_nodeset.delay(nodes, hosts)
 
-        cset_job.id = submit_result['id']
-        cset_job.name = submit_result['name']
-        cset_job.state = submit_result['state']
+        location = "/nucleus/v1/computeset/%s"%(cset.id)
 
-        if cset_job.state is ComputeSetJob.CSETJOB_STATE_FAILED:
-            cset.delete()
-            msg = "The computeset for cluster %s could not be started. %s" % \
-                (request.data['cluster'], submit_result['error'])
-            return Response(msg, status=status.HTTP_500_SERVER_ERROR)
-        else:
-            cset_job.save()
-            cset.state = COMPUTESET_STATE_QUEUED
-            cset.save()
+        serializer = ComputeSetSerializer(cset)
 
-            # We should only poweron computes after entering jobscript and
-            # finishing the PROLOG on all allocated nodes. At that point the
-            # nodelist will be returned and we can call poweron_nodeset()
-            #poweron_nodeset.delay(nodes, hosts)
-
-            location = "/nucleus/v1/computeset/%s"%(cset.id)
-
-            serializer = ComputeSetSerializer(cset)
-
-            response = Response(
-                serializer.data,
-                status=201,
-                headers={'Location': location})
+        response = Response(
+            serializer.data,
+            status=201,
+            headers={'Location': location})
 
         return response
 
