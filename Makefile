@@ -13,8 +13,14 @@ view:
 version:
 	python -c "import django; print(django.get_version())"
 
+worker-fe1-debug:
+	cd nucleus_service; celery -A nucleus -l debug -c 2 -B -Q comet-fe1 worker
+
 worker-fe1:
-	cd nucleus_service; celery -A nucleus -c 2 -B -l debug -Q comet-fe1 worker
+	cd nucleus_service; celery -A nucleus --detach -c 2 -B -Q comet-fe1 worker
+
+worker-update-debug:
+	cd nucleus_service; celery -A nucleus -l debug -Q update worker
 
 worker-update:
 	cd nucleus_service; celery -A nucleus --detach -Q update worker
