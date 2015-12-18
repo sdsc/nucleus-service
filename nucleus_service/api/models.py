@@ -121,7 +121,7 @@ class ComputeSetJob(models.Model):
         (CSETJOB_STATE_RUNNING, 'Running'),
         (CSETJOB_STATE_COMPLETED, 'Completed'),
     )
-    jobid = models.PositiveIntegerField(unique=True)
+    jobid = models.PositiveIntegerField(unique=True, null=True)
     computeset = models.ForeignKey(ComputeSet, related_name='computesetjob')
     name = models.CharField(max_length=64, unique=True)
     user = models.ForeignKey(NucleusUser)
