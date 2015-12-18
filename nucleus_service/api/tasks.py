@@ -12,7 +12,6 @@ def submit_computesetjob(cset_job_json):
         In addition, since django.db modules are not installed on comet-fe1
         we need to use json module to deserialize/serialize JSON.
     """
-    import logging
 
     cset_job = json.loads(cset_job_json)
 
