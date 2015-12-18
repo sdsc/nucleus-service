@@ -178,6 +178,11 @@ def update_clusters(clusters_json):
     for cluster_rocks in clusters_json:
         try:
             cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
+
+            if(cluster_obj.vlan != cluster_rocks["vlan"]):
+                cluster_obj.vlan = cluster_rocks["vlan"]
+                cluster_obj.save()
+
             frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
             if(frontend.state != cluster_rocks["state"] or frontend.memory != cluster_rocks["mem"] or frontend.cpus != cluster_rocks["cpus"]):
                 frontend.state = cluster_rocks["state"]
@@ -196,6 +201,7 @@ def update_clusters(clusters_json):
 
             cluster_obj = Cluster()
             cluster_obj.name = cluster_rocks["frontend"]
+            cluster_obj.vlan = cluster_rocks["vlan"]
             cluster_obj.frontend = frontend
             cluster_obj.save()
 
@@ -203,7 +209,7 @@ def update_clusters(clusters_json):
         frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
         for interface in cluster_rocks['interfaces']:
             if(interface["mac"]):
-                if_obj, created = FrontendInterface.objects.update_or_create(frontend = frontend, ip = interface["ip"], mac = interface["mac"])
+                if_obj, created = FrontendInterface.objects.update_or_create(frontend = frontend, ip = interface["ip"], netmask = interface["netmask"], mac = interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
 
         for compute_rocks in cluster_rocks["computes"]:
             compute_obj, created = Compute.objects.get_or_create(rocks_name = compute_rocks["name"], cluster = cluster_obj)
@@ -234,4 +240,4 @@ def update_clusters(clusters_json):
 
             for interface in compute_rocks['interfaces']:
                 if(interface["mac"]):
-                    if_obj, created = ComputeInterface.objects.update_or_create(compute = compute_obj, ip = interface["ip"], mac = interface["mac"])
+                    if_obj, created = ComputeInterface.objects.update_or_create(compute = compute_obj, ip = interface["ip"], netmask = interface["netmask"], mac = interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
