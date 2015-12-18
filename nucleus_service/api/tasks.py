@@ -6,7 +6,7 @@ import json
 import sys, traceback
 
 @shared_task(ignore_result=True)
-def submit_computesetjob(self, cset_job_json):
+def submit_computesetjob(cset_job_json):
     """ This task runs on comet-fe1 therefore database updates can ONLY occur
         using update_computesetjob() which will run on comet-nucleus.
         In addition, since django.db modules are not installed on comet-fe1
@@ -17,7 +17,7 @@ def submit_computesetjob(self, cset_job_json):
     cset_job = json.loads(cset_job_json)
 
     cset_job["name"] = "VC-JOB-%s-%s" % (cset_job["computeset_id"],
-        str(self.request.id).replace('-',''))
+        str(request.id).replace('-',''))
     cset_job["jobid"] = None
     cset_job["error"] = None
 
