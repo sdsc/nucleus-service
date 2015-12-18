@@ -14,10 +14,6 @@ def submit_computesetjob(self, cset_job_json):
     from api.models import ComputeSetJob, CSETJOB_STATE_SUBMITTED, CSETJOB_STATE_FAILED, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
     from api.serializers import ComputeSetJobSerializer
 
-    FORMAT = "%(asctime)-15s %(computeset)s %(error)s %(message)s"
-    logging.basicConfig(level=logging.INFO, format=FORMAT)
-    logger = logging.getLogger(__name__)
-
     cset_job = json.loads(cset_job_json)
 
     cset_job["name"] = "VC-JOB-%s-%s" % (cset_job["computeset_id"],
@@ -61,17 +57,14 @@ def submit_computesetjob(self, cset_job_json):
 
     except OSError as e:
         cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
-        d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
-        logger.error("OSError: %s", e.output.strip(), extra=d)
+        msg = "OSError: %s" % (e)
 
     except subprocess.CalledProcessError as e:
         cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
         if e.returncode == 124:
-            d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
-            logger.error("CalledProcessError: Timeout during request: %s", e.output.strip().rstrip(), extra=d)
+            msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
         else:
-            d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
-            logger.error("CalledProcessError: %s", e.output.strip().rstrip(), extra=d)
+            msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
 
 
 @shared_task(ignore_result=True)
