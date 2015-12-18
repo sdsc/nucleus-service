@@ -86,7 +86,7 @@ def update_computesetjob(cset_job_json):
 
         if (
             cset_job.jobid != cset_job_json["id"] or
-            cset_job.nodelist != cset_job_json["nodelist"] or
+            cset_job.nodelist != cset_job_json["nodelist"]
             ):
             cset_job.jobid = cset_job["jobid"]
             cset_job.nodelist = cset_job["nodelist"]
@@ -129,7 +129,7 @@ def update_computesetjob(cset_job_json):
                     poweroff_nodes.delay(nodes, "shutdown")
                     # TODO: vlan & switchport de-configuration
 
-    except: ComputeSetJob.DoesNotExist:
+    except ComputeSetJob.DoesNotExist:
         cset_job = None
         d = {'computeset': cset_job_json["id"], 'error': ComputeSetJob.DoesNotExist}
         logger.error("update_computesetjob: %s", "ComputeSetJob does not exist", extra=d)
