@@ -8,15 +8,11 @@ import sys, traceback
 @shared_task(ignore_result=True)
 def submit_computesetjob(self, cset_job_json):
     """ This task runs on comet-fe1 therefore database updates can ONLY occur
-        using update_computesetjob() which will run on comet-nucleus
+        using update_computesetjob() which will run on comet-nucleus.
+        In addition, since django.db modules are not installed on comet-fe1
+        we need to use json module to deserialize/serialize JSON.
     """
     import logging
-    from api.models import ComputeSetJob, CSETJOB_STATE_SUBMITTED, CSETJOB_STATE_FAILED, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
-    from api.serializers import ComputeSetJobSerializer
-
-    FORMAT = "%(asctime)-15s %(computeset)s %(error)s %(message)s"
-    logging.basicConfig(level=logging.INFO, format=FORMAT)
-    logger = logging.getLogger(__name__)
 
     cset_job = json.loads(cset_job_json)
 
@@ -55,23 +51,21 @@ def submit_computesetjob(self, cset_job_json):
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         cset_job["jobid"] = output.rstrip().strip()
-        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_SUBMITTED
-        serializer = ComputeSetJobSerializer(cset_job)
-        update_computesetjob.delay(serializer.data)
+        cset_job["state"] = "submitted"
+        update_computesetjob.delay(json.dumps(cset_job))
 
     except OSError as e:
-        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
-        d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
-        logger.error("OSError: %s", e.output.strip(), extra=d)
+        cset_job["state"] = "failed"
+        msg = "OSError: %s" % (e)
+        update_computesetjob.delay(json.dumps(cset_job))
 
     except subprocess.CalledProcessError as e:
-        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
+        cset_job["state"] = "failed"
+        update_computesetjob.delay(json.dumps(cset_job))
         if e.returncode == 124:
-            d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
-            logger.error("CalledProcessError: Timeout during request: %s", e.output.strip().rstrip(), extra=d)
+            msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
         else:
-            d = {'computeset': cset_job["computeset_id"], 'error': e.returncode}
-            logger.error("CalledProcessError: %s", e.output.strip().rstrip(), extra=d)
+            msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
 
 
 @shared_task(ignore_result=True)
@@ -86,7 +80,7 @@ def update_computesetjob(cset_job_json):
 
         if (
             cset_job.jobid != cset_job_json["id"] or
-            cset_job.nodelist != cset_job_json["nodelist"] or
+            cset_job.nodelist != cset_job_json["nodelist"]
             ):
             cset_job.jobid = cset_job["jobid"]
             cset_job.nodelist = cset_job["nodelist"]
@@ -129,7 +123,7 @@ def update_computesetjob(cset_job_json):
                     poweroff_nodes.delay(nodes, "shutdown")
                     # TODO: vlan & switchport de-configuration
 
-    except: ComputeSetJob.DoesNotExist:
+    except ComputeSetJob.DoesNotExist:
         cset_job = None
         d = {'computeset': cset_job_json["id"], 'error': ComputeSetJob.DoesNotExist}
         logger.error("update_computesetjob: %s", "ComputeSetJob does not exist", extra=d)
