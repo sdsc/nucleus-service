@@ -8,11 +8,11 @@ import sys, traceback
 @shared_task(ignore_result=True)
 def submit_computesetjob(self, cset_job_json):
     """ This task runs on comet-fe1 therefore database updates can ONLY occur
-        using update_computesetjob() which will run on comet-nucleus
+        using update_computesetjob() which will run on comet-nucleus.
+        In addition, since django.db modules are not installed on comet-fe1
+        we need to use json module to deserialize/serialize JSON.
     """
     import logging
-    from api.models import ComputeSetJob, CSETJOB_STATE_SUBMITTED, CSETJOB_STATE_FAILED, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
-    from api.serializers import ComputeSetJobSerializer
 
     cset_job = json.loads(cset_job_json)
 
@@ -51,16 +51,17 @@ def submit_computesetjob(self, cset_job_json):
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         cset_job["jobid"] = output.rstrip().strip()
-        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_SUBMITTED
-        serializer = ComputeSetJobSerializer(cset_job)
-        update_computesetjob.delay(serializer.data)
+        cset_job["state"] = "submitted"
+        update_computesetjob.delay(json.dumps(cset_job))
 
     except OSError as e:
-        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
+        cset_job["state"] = "failed"
         msg = "OSError: %s" % (e)
+        update_computesetjob.delay(json.dumps(cset_job))
 
     except subprocess.CalledProcessError as e:
-        cset_job["state"] = ComputeSetJob.CSETJOB_STATE_FAILED
+        cset_job["state"] = "failed"
+        update_computesetjob.delay(json.dumps(cset_job))
         if e.returncode == 124:
             msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
         else:
