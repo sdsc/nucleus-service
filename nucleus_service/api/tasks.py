@@ -76,10 +76,10 @@ def update_computesetjob(cset_job_json):
     import hostlist
 
     try:
-        cset_job = ComputeSetJob.objects.get(jobid = cset_job_json["jobid"])
+        cset_job = ComputeSetJob.objects.get(computeset = cset_job_json["computeset"])
 
         if (
-            cset_job.jobid != cset_job_json["id"] or
+            cset_job.jobid != cset_job_json["jobid"] or
             cset_job.nodelist != cset_job_json["nodelist"]
             ):
             cset_job.jobid = cset_job["jobid"]
