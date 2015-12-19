@@ -61,18 +61,19 @@ class ComputeSetSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'state', 'cluster')
 
 class ComputeSetJobSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    jobid = serializers.IntegerField()
     computeset = serializers.SlugRelatedField(read_only=True, slug_field='id')
     name = serializers.CharField(max_length=64, allow_null=True)
-    user = serializers.SlugRelatedField(read_only=True, slug_field='username')
-    account = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    user = serializers.CharField()
+    account = serializers.CharField()
     walltime_mins = serializers.IntegerField()
     nodelist = serializers.CharField(allow_null=True)
+    node_count = serializers.IntegerField()
     state = serializers.ChoiceField(ComputeSetJob.CSETJOB_STATES)
     class Meta:
         model = ComputeSetJob
-        fields = ['id', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'state']
-        read_only_fields = ('id', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'state')
+        fields = ['jobid', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'node_count', 'state']
+        read_only_fields = ('jobid', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'node_count', 'state')
 
 class ClusterSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=100)

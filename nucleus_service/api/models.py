@@ -124,10 +124,11 @@ class ComputeSetJob(models.Model):
     jobid = models.PositiveIntegerField(unique=True, null=True)
     computeset = models.ForeignKey(ComputeSet, related_name='computesetjob')
     name = models.CharField(max_length=64, unique=True)
-    user = models.ForeignKey(django.contrib.auth.models.User)
-    account = models.ForeignKey(django.contrib.auth.models.Group)
+    user = models.CharField(max_length=30)
+    account = models.CharField(max_length=80)
     walltime_mins = models.PositiveIntegerField()
     nodelist = models.TextField(null=True)
+    node_count = models.PositiveIntegerField(null=True)
     state = models.CharField(max_length=128,
         choices=CSETJOB_STATES,
         default=CSETJOB_STATE_SUBMITTED)
