@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
 from celery import shared_task, Task
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, check_output, STDOUT, CalledProcessError
 import json
 import sys, traceback
 
 @shared_task(ignore_result=True)
-def submit_computesetjob(cset_job_json):
+def submit_computesetjob(cset_job):
     """ This task runs on comet-fe1 therefore database updates can ONLY occur
         using update_computesetjob() which will run on comet-nucleus.
         In addition, since django.db modules are not installed on comet-fe1
@@ -14,9 +14,7 @@ def submit_computesetjob(cset_job_json):
     """
     import uuid
 
-    cset_job = json.loads(cset_job_json)
-
-    cset_job["name"] = "VC-JOB-%s-%s" % (cset_job["computeset_id"],
+    cset_job["name"] = "VC-JOB-%s-%s" % (cset_job["computeset"],
         str(uuid.uuid1()).replace('-',''))
     cset_job["jobid"] = None
     cset_job["error"] = None
@@ -37,10 +35,12 @@ def submit_computesetjob(cset_job_json):
         '/usr/bin/sbatch',
         '--job-name=%s' % (cset_job['name']),
         '--output=%s.out' % (cset_job['name']),
+	    '--uid=%s' % (cset_job['user']),
+	    '--account=%s' % (cset_job['account']),
         '--workdir=/tmp',
         '--parsable',
         '--partition=virt',
-        '--nodes=%s-%s' % (cset_job['nodes'], cset_job['nodes']),
+        '--nodes=%s-%s' % (cset_job['node_count'], cset_job['node_count']),
         '--ntasks-per-node=1',
         '--cpus-per-task=24',
         '--signal=B:USR1@60',
@@ -49,23 +49,23 @@ def submit_computesetjob(cset_job_json):
         '%s' % (cset_job['walltime_mins'])]
 
     try:
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        output = check_output(cmd, stderr=STDOUT)
         cset_job["jobid"] = output.rstrip().strip()
         cset_job["state"] = "submitted"
-        update_computesetjob.delay(json.dumps(cset_job))
+        update_computesetjob.delay(cset_job)
 
     except OSError as e:
         cset_job["state"] = "failed"
         msg = "OSError: %s" % (e)
-        update_computesetjob.delay(json.dumps(cset_job))
+        update_computesetjob.delay(cset_job)
 
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         cset_job["state"] = "failed"
-        update_computesetjob.delay(json.dumps(cset_job))
         if e.returncode == 124:
             msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
         else:
             msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
+        update_computesetjob.delay(cset_job)
 
 
 @shared_task(ignore_result=True)

@@ -321,12 +321,13 @@ class ComputeSetViewSet(ModelViewSet):
 
         cset_job = ComputeSetJob()
         cset_job.computeset_id = cset.id
-        cset_job.user = self.request.user.api_key
+        cset_job.user = self.request.user.username
         cset_job.account = clust.project
         cset_job.walltime_mins = walltime_mins
-        cset_job.id = None
-        cset_job.name = None
-        cset_job.hostlist = None
+        cset_job.jobid = 0
+        cset_job.name = ""
+	    cset_job.node_count = cset.computes.count()
+        cset_job.nodelist = ""
         cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
 
         serializer = ComputeSetJobSerializer(cset_job)
