@@ -23,8 +23,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 class FrontendInterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = FrontendInterface
-        fields = ("ip", "mac")
-        read_only_fields = ("ip", "mac")
+        fields = ("ip", "netmask", "mac", "iface", "subnet")
+        read_only_fields = ("ip", "netmask", "mac", "iface", "subnet")
         depth = 1
 
 class FrontendSerializer(serializers.ModelSerializer):
@@ -39,8 +39,8 @@ class FrontendSerializer(serializers.ModelSerializer):
 class ComputeInterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputeInterface
-        fields = ("ip", "mac")
-        read_only_fields = ("ip", "mac")
+        fields = ("ip", "netmask", "mac", "iface", "subnet")
+        read_only_fields = ("ip", "netmask", "mac", "iface", "subnet")
         depth = 1
 
 class ComputeSerializer(serializers.ModelSerializer):
@@ -84,5 +84,5 @@ class ClusterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cluster
-        fields = ('name', 'description', 'computes', 'frontend', 'project')
-        read_only_fields = ('computes', 'name', 'frontend')
+        fields = ('name', 'description', 'computes', 'frontend', 'project', 'vlan')
+        read_only_fields = ('computes', 'name', 'frontend', 'vlan')
