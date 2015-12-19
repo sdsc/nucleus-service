@@ -326,7 +326,7 @@ class ComputeSetViewSet(ModelViewSet):
         cset_job.walltime_mins = walltime_mins
         cset_job.jobid = 0
         cset_job.name = ""
-	    cset_job.node_count = cset.computes.count()
+        cset_job.node_count = cset.computes.count()
         cset_job.nodelist = ""
         cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
 
