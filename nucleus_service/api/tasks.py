@@ -72,18 +72,22 @@ def submit_computesetjob(cset_job):
 def update_computesetjob(cset_job_json):
     """ This task runs on comet-nucleus and can update the database """
     from api.models import ComputeSet
-    from api.models import ComputeSetJob, CSETJOB_STATE_SUBMITTED, CSETJOB_STATE_FAILED, CSETJOB_STATE_RUNNING, CSETJOB_STATE_COMPLETED
-    import hostlist
+    from api.models import ComputeSetJob
+    import api.hostlist
 
     try:
         cset_job = ComputeSetJob.objects.get(computeset = cset_job_json["computeset"])
 
         if (
             cset_job.jobid != cset_job_json["jobid"] or
+            cset_job.state != cset_job_json["state"] or
+            cset_job.name != cset_job_json["name"] or
             cset_job.nodelist != cset_job_json["nodelist"]
             ):
-            cset_job.jobid = cset_job["jobid"]
-            cset_job.nodelist = cset_job["nodelist"]
+            cset_job.jobid = cset_job_json["jobid"]
+            cset_job.state = cset_job_json["state"]
+            cset_job.name = cset_job_json["name"]
+            cset_job.nodelist = cset_job_json["nodelist"]
             cset_job.save()
 
         if (cset_job.state != cset_job_json["state"]):
@@ -93,9 +97,9 @@ def update_computesetjob(cset_job_json):
 
             cset = cset_job.computesetjob
 
-            # Job passed from QUEUED to RUNNING state...
+            # Job passed from SUBMITTED to RUNNING state...
             if (
-                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_QUEUED and
+                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_SUBMITTED and
                 cset_job.state == ComputeSetJob.CSETJOB_STATE_RUNNING
                 ):
                 if cset_job.nodelist is not None:
@@ -104,9 +108,9 @@ def update_computesetjob(cset_job_json):
                     # TODO: vlan & switchport configuration
                     poweron_nodeset.delay(nodes, hosts)
 
-            # Job passed from QUEUED to COMPLETED state directly...
+            # Job passed from SUBMITTED to COMPLETED state directly...
             if (
-                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_QUEUED and
+                old_cset_job_state == ComputeSetJob.CSETJOB_STATE_SUBMITTED and
                 cset_job.state == ComputeSetJob.CSETJOB_STATE_COMPLETED
                 ):
                 if cset_job.nodelist is not None:
@@ -125,8 +129,7 @@ def update_computesetjob(cset_job_json):
 
     except ComputeSetJob.DoesNotExist:
         cset_job = None
-        d = {'computeset': cset_job_json["id"], 'error': ComputeSetJob.DoesNotExist}
-        logger.error("update_computesetjob: %s", "ComputeSetJob does not exist", extra=d)
+        msg = "update_computesetjob: %s" % ("ComputeSetJob (%d) does not exist" % (cset_job_json["computeset"]))
 
 @shared_task(ignore_result=True)
 def poweron_nodeset(nodes, hosts):
