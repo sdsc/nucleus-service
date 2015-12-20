@@ -12,6 +12,7 @@ def submit_computesetjob(cset_job):
         In addition, since django.db modules are not installed on comet-fe1
         we need to use json module to deserialize/serialize JSON.
     """
+    from api.tasks import update_computesetjob
     import uuid
 
     cset_job["name"] = "VC-JOB-%s-%s" % (cset_job["computeset"],
