@@ -329,7 +329,6 @@ class ComputeSetViewSet(ModelViewSet):
         cset_job.node_count = cset.computes.count()
         cset_job.nodelist = ""
         cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
-        cset_job.save()
 
         serializer = ComputeSetJobSerializer(cset_job)
         submit_computesetjob.delay(serializer.data)
