@@ -94,14 +94,19 @@ def update_computesetjob(cset_job_json):
         if created:
             if ("name" in cset_job_json):
                 cset_job.name = cset_job_json["name"]
+
             if ("user" in cset_job_json):
                 cset_job.user = cset_job_json["user"]
-	        if("account" in cset_job_json):
+
+            if("account" in cset_job_json):
                 cset_job.account = cset_job_json["account"]
-	        if ("walltime_mins" in cset_job_json):
+
+            if ("walltime_mins" in cset_job_json):
                 cset_job.walltime_mins = cset_job_json["walltime_mins"]
+
             if ("node_count" in cset_job_json):
                 cset_job.node_count = cset_job_json["node_count"]
+
             cset_job.save()
 
 	    #The following will only exist after jobscript barrier...
