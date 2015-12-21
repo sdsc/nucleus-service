@@ -74,7 +74,7 @@ def update_computesetjob(cset_job_json):
     """ This task runs on comet-nucleus and can update the database """
     from api.models import ComputeSet
     from api.models import ComputeSetJob
-    import api.hostlist
+    from api import hostlist
 
     try:
         cset = ComputeSet.objects.get(id = cset_job_json["computeset"])
@@ -127,7 +127,11 @@ def update_computesetjob(cset_job_json):
                 cset_job.state == ComputeSetJob.CSETJOB_STATE_RUNNING
                 ):
                 if cset_job.nodelist is not None:
-                    nodes = [compute['name'] for compute in cset.computes]
+                    cset = ComputeSet.objects.get(pk=cset_job.computeset_id)
+                    nodes = []
+                    for compute in cset.computes.all():
+                        nodes.append(compute.rocks_name)
+
                     hosts = hostlist.expand_hostlist("%s" % cset_job.nodelist)
                     # TODO: vlan & switchport configuration
                     poweron_nodeset.delay(nodes, hosts)
