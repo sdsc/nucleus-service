@@ -77,26 +77,44 @@ def update_computesetjob(cset_job_json):
     import api.hostlist
 
     try:
-        cset_job = ComputeSetJob.objects.get(computeset = cset_job_json["computeset"])
+        cset = ComputeSet.objects.get(id = cset_job_json["computeset"])
+    except ComputeSet.DoesNotExist:
+        cset = None
 
-        if (
-            cset_job.jobid != cset_job_json["jobid"] or
-            cset_job.state != cset_job_json["state"] or
-            cset_job.name != cset_job_json["name"] or
-            cset_job.nodelist != cset_job_json["nodelist"]
-            ):
-            cset_job.jobid = cset_job_json["jobid"]
-            cset_job.state = cset_job_json["state"]
-            cset_job.name = cset_job_json["name"]
+    try:
+        cset_job, created = ComputeSetJob.objects.get_or_create(
+            jobid = cset_job_json["jobid"],
+            defaults = {
+                'computeset': cset,
+            	'state': cset_job_json["state"],
+	            'walltime_mins': 5}
+        )
+
+	    # The following will typically only exist or be set on submit...
+        if created:
+            if ("name" in cset_job_json):
+                cset_job.name = cset_job_json["name"]
+            if ("user" in cset_job_json):
+                cset_job.user = cset_job_json["user"]
+	        if("account" in cset_job_json):
+                cset_job.account = cset_job_json["account"]
+	        if ("walltime_mins" in cset_job_json):
+                cset_job.walltime_mins = cset_job_json["walltime_mins"]
+            if ("node_count" in cset_job_json):
+                cset_job.node_count = cset_job_json["node_count"]
+            cset_job.save()
+
+	    #The following will only exist after jobscript barrier...
+        if ("nodelist" in cset_job_json):
             cset_job.nodelist = cset_job_json["nodelist"]
             cset_job.save()
 
-        if (cset_job.state != cset_job_json["state"]):
+        old_csest_job_state = None
+        if ("state" in cset_job_json):
             old_cset_job_state = cset_job.state
-            cset_job.state = cset_job_json["state"]
-            cset_job.save()
-
-            cset = cset_job.computesetjob
+            if (cset_job.state != cset_job_json["state"]):
+                cset_job.state = cset_job_json["state"]
+                cset_job.save()
 
             # Job passed from SUBMITTED to RUNNING state...
             if (
