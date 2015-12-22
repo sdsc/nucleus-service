@@ -168,41 +168,47 @@ def poweron_nodeset(nodes, hosts, iso_name):
         return
     outb = ""
     errb = ""
+
     if(hosts):
         for node, host in zip(nodes, hosts):
             res = Popen(["/opt/rocks/bin/rocks", "set", "host", "vm", "%s"%node, "physnode=%s"%host], stdout=PIPE, stderr=PIPE)
             out, err = res.communicate()
             outb += out
             errb += err
+
     if(iso_name):
         (ret_code, out, err) = _attach_iso(nodes, iso_name)
         if(ret_code):
             outb += out
             errb += err
             return "Error adding iso to nodes: %s\n%s"%(outb, errb)
-    args = ["/opt/rocks/bin/rocks", "start", "host", "vm"]
-    args.extend(nodes)
-    res = Popen(args, stdout=PIPE, stderr=PIPE)
-    out, err = res.communicate()
-    outb += out
-    errb += err
-    return "%s\n%s"%(outb, errb)
+
+    (ret_code, out, err) = _poweron_nodes(nodes)
+    if (ret_code):
+        outb += out
+        errb += err
+        return "Error powering on nodes: %s\n%s"%(outb, errb)
 
 @shared_task(ignore_result=True)
 def poweroff_nodes(nodes, action):
+    (ret_code, out, err) = _poweroff_nodes(nodes, action)
+    if (ret_code):
+        return "%s\n%s" % (out, err)
+
+# Local function to be called from multiple tasks
+def _poweroff_nodes(nodes, action):
     args = ["/opt/rocks/bin/rocks", "stop", "host", "vm"]
     args.extend(nodes)
     args.append("action=%s"%action)
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
-    return "%s\n%s"%(out, err)
+    return (res.returncode, out, err)
 
 @shared_task(ignore_result=True)
 def attach_iso(nodes, iso_name):
     (ret_code, out, err) = _attach_iso(nodes, iso_name)
     if(ret_code):
         return "%s\n%s"%(out, err)
-
 
 # Local function to be called from multiple tasks
 def _attach_iso(nodes, iso_name):
@@ -218,11 +224,17 @@ def _attach_iso(nodes, iso_name):
 
 @shared_task(ignore_result=True)
 def poweron_nodes(nodes):
+    (ret_code, out, err) = _poweron_nodes(nodes)
+    if (ret_code):
+        return "%s\n%s" % (out, err)
+
+# Local function to be called from multiple tasks
+def _poweron_nodes(nodes):
     args = ["/opt/rocks/bin/rocks", "start", "host", "vm"]
     args.extend(nodes)
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
-    return "%s\n%s"%(out, err)
+    return (res.returncode, out, err)
 
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
