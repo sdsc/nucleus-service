@@ -86,8 +86,8 @@ def update_computesetjob(cset_job_json):
             jobid = cset_job_json["jobid"],
             defaults = {
                 'computeset': cset,
-            	'state': cset_job_json["state"],
-	            'walltime_mins': 5}
+                'state': cset_job_json["state"],
+                'walltime_mins': 5}
         )
 
 	    # The following will typically only exist or be set on submit...
