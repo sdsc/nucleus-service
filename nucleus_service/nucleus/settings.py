@@ -137,6 +137,9 @@ CELERY_ROUTES = (
                     {'api.tasks.poweroff_nodes': 
                         {'routing_key': 'comet-fe1'}
                     },
+                    {'api.tasks.attach_iso': 
+                        {'routing_key': 'comet-fe1'}
+                    },
                     {'api.tasks.update_computesetjob':
                         {'routing_key': 'update'}
                     },
