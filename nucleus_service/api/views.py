@@ -280,9 +280,9 @@ class ComputeSetViewSet(ModelViewSet):
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
 
-        walltime_mins = request.data["walltime_mins"]
+        walltime_mins = request.data.get("walltime_mins")
         if(not walltime_mins):
-            return Response("You must provide a walltime (minutes) value.",
+            return Response("You must provide a walltime (minutes) value as walltime_mins attribute.",
                 status=status.HTTP_400_BAD_REQUEST)
 
         nodes = []
