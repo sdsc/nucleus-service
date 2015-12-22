@@ -72,6 +72,42 @@ def submit_computesetjob(cset_job):
 
 
 @shared_task(ignore_result=True)
+def cancel_computesetjob(cset_job):
+    """ Sending --signal=USR1 to a running computeset job will allow it exit
+        in the same manner as when the computeset job reaches it walltime_mins
+        limit and is signalled by Slurm to exit.
+        Actual poweroff of the nodes is handled by the jobscript and/or epilog.
+    """
+    from api.tasks import update_computesetjob
+
+    cmd = ['/usr/bin/timeout',
+        '2',
+        '/usr/bin/scancel',
+        '--batch',
+        '--quiet',
+        '--signal=USR1',
+        '%s' % (cset_job['jobid'])]
+
+    try:
+        output = check_output(cmd, stderr=STDOUT)
+        cset_job["state"] = "cancelled"
+        update_computesetjob.delay(cset_job)
+
+    except OSError as e:
+        cset_job["state"] = "failed"
+        msg = "OSError: %s" % (e)
+        update_computesetjob.delay(cset_job)
+
+    except CalledProcessError as e:
+        cset_job["state"] = "failed"
+        if e.returncode == 124:
+            msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
+        else:
+            msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
+        update_computesetjob.delay(cset_job)
+
+
+@shared_task(ignore_result=True)
 def update_computesetjob(cset_job_json):
     """ This task runs on comet-nucleus and can update the database """
     from api.models import ComputeSet
@@ -189,6 +225,7 @@ def poweron_nodeset(nodes, hosts, iso_name):
         errb += err
         return "Error powering on nodes: %s\n%s"%(outb, errb)
 
+
 @shared_task(ignore_result=True)
 def poweroff_nodes(nodes, action):
     (ret_code, out, err) = _poweroff_nodes(nodes, action)
@@ -203,6 +240,7 @@ def _poweroff_nodes(nodes, action):
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
     return (res.returncode, out, err)
+
 
 @shared_task(ignore_result=True)
 def attach_iso(nodes, iso_name):
@@ -222,6 +260,7 @@ def _attach_iso(nodes, iso_name):
     out, err = res.communicate()
     return (res.returncode, out, err)
 
+
 @shared_task(ignore_result=True)
 def poweron_nodes(nodes):
     (ret_code, out, err) = _poweron_nodes(nodes)
@@ -235,6 +274,7 @@ def _poweron_nodes(nodes):
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
     return (res.returncode, out, err)
+
 
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
