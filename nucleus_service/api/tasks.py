@@ -5,6 +5,8 @@ from subprocess import Popen, PIPE, check_output, STDOUT, CalledProcessError
 import json
 import sys, traceback
 
+ISOS_DIR = "/mnt/images"
+
 @shared_task(ignore_result=True)
 def submit_computesetjob(cset_job):
     """ This task runs on comet-fe1 therefore database updates can ONLY occur
@@ -160,7 +162,7 @@ def update_computesetjob(cset_job_json):
         msg = "update_computesetjob: %s" % ("ComputeSetJob (%d) does not exist" % (cset_job_json["computeset"]))
 
 @shared_task(ignore_result=True)
-def poweron_nodeset(nodes, hosts):
+def poweron_nodeset(nodes, hosts, iso_name):
     if(hosts and (len(nodes) != len(hosts))):
         print "hosts length is not equal to nodes"
         return
@@ -172,6 +174,12 @@ def poweron_nodeset(nodes, hosts):
             out, err = res.communicate()
             outb += out
             errb += err
+    if(iso_name):
+        (ret_code, out, err) = _attach_iso(nodes, iso_name)
+        if(ret_code):
+            outb += out
+            errb += err
+            return "Error adding iso to nodes: %s\n%s"%(outb, errb)
     args = ["/opt/rocks/bin/rocks", "start", "host", "vm"]
     args.extend(nodes)
     res = Popen(args, stdout=PIPE, stderr=PIPE)
@@ -188,6 +196,25 @@ def poweroff_nodes(nodes, action):
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
     return "%s\n%s"%(out, err)
+
+@shared_task(ignore_result=True)
+def attach_iso(nodes, iso_name):
+    (ret_code, out, err) = _attach_iso(nodes, iso_name)
+    if(ret_code):
+        return "%s\n%s"%(out, err)
+
+
+# Local function to be called from multiple tasks
+def _attach_iso(nodes, iso_name):
+    args = ["/opt/rocks/bin/rocks", "set", "host", "vm", "cdrom"]
+    args.extend(nodes)
+    if(iso_name):
+        args.append("cdrom=%s/%s"%(ISOS_DIR, iso_name))
+    else:
+        args.append("cdrom=none")
+    res = Popen(args, stdout=PIPE, stderr=PIPE)
+    out, err = res.communicate()
+    return (res.returncode, out, err)
 
 @shared_task(ignore_result=True)
 def poweron_nodes(nodes):

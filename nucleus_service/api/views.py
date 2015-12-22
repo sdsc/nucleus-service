@@ -21,7 +21,7 @@ import subprocess
 
 from django.shortcuts import get_object_or_404
 
-from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computesetjob
+from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computesetjob, attach_iso
 import random
 
 from functools import wraps
@@ -132,9 +132,9 @@ class ComputeViewSet(ViewSet):
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
-        if(not request.GET["iso_name"]):
+        if(not "iso_name" in request.GET):
             return Response("Please provide the iso_name", status=400)
-        attach_iso.delay([compute.rocks_name], request.PUT["iso_name"])
+        attach_iso.delay([compute.rocks_name], request.GET["iso_name"])
         return Response(status=204)
 
 
