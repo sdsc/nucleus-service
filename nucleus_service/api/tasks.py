@@ -266,7 +266,7 @@ def _poweron_nodes(nodes):
 
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
-    from api.models import Cluster, Frontend, Compute, ComputeSet, FrontendInterface, ComputeInterface, COMPUTESET_STATE_STARTED, COMPUTESET_STATE_COMPLETED, COMPUTESET_STATE_QUEUED
+    from api.models import Cluster, Frontend, Compute, ComputeSet, FrontendInterface, ComputeInterface
     for cluster_rocks in clusters_json:
         try:
             cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
@@ -318,13 +318,11 @@ def update_clusters(clusters_json):
                 compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.save()
                 try:
-                    cs = ComputeSet.objects.get(computes__id__exact=compute_obj.id, state__in=[COMPUTESET_STATE_QUEUED, COMPUTESET_STATE_STARTED])
-                    if cs.state == COMPUTESET_STATE_QUEUED and compute_obj.state == "active":
-                        cs.state = COMPUTESET_STATE_STARTED
-                        cs.save()
-                    elif cs.state == COMPUTESET_STATE_STARTED and (not cs.computes.filter(state="active")):
-                        cs.state = COMPUTESET_STATE_COMPLETED
-                        cs.save()
+                    cset = ComputeSet.objects.get(computes__id__exact=compute_obj.id,
+                            state__in=[CSET_STATE_RUNNING])
+                    if cset.state == CSET_STATE_RUNNING
+                        and not cset.computes.filter(state="active"):
+                        cancel_computeset.delay(cset)
                 except ComputeSet.DoesNotExist:
                     print "Computeset for compute %s not found"%compute_obj.name
                 except:

@@ -124,26 +124,29 @@ REST_FRAMEWORK = {
     )
 }
 
-CELERY_ROUTES = (   
+CELERY_ROUTES = (
                     {'api.tasks.submit_computeset':
                         {'routing_key': 'comet-fe1'}
                     },
-                    {'api.tasks.poweron_nodeset': 
+                    {'api.tasks.cancel_computeset':
                         {'routing_key': 'comet-fe1'}
                     },
-                    {'api.tasks.poweron_nodes': 
+                    {'api.tasks.poweron_nodeset':
                         {'routing_key': 'comet-fe1'}
                     },
-                    {'api.tasks.poweroff_nodes': 
+                    {'api.tasks.poweron_nodes':
                         {'routing_key': 'comet-fe1'}
                     },
-                    {'api.tasks.attach_iso': 
+                    {'api.tasks.poweroff_nodes':
+                        {'routing_key': 'comet-fe1'}
+                    },
+                    {'api.tasks.attach_iso':
                         {'routing_key': 'comet-fe1'}
                     },
                     {'api.tasks.update_computeset':
                         {'routing_key': 'update'}
                     },
-                    {'api.tasks.update_clusters': 
+                    {'api.tasks.update_clusters':
                         {'routing_key': 'update'}
                     }
                  )
