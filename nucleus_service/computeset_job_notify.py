@@ -2,7 +2,7 @@
 
 import json
 import os
-from api.tasks import update_computesetjob
+from api.tasks import update_computeset
 
 from nucleus.celery import *
 
@@ -19,9 +19,9 @@ if os.environ.has_key('SLURM_JOB_ID'):
 
 if os.environ.has_key('SLURM_JOB_NAME'):
     request['name'] = str(os.environ['SLURM_JOB_NAME'])
-    request['computeset'] = int(request['name'].split('-')[2])
+    request['id'] = int(request['name'].split('-')[2])
 
 if os.environ.has_key('SLURM_JOB_NODELIST'):
     request['nodelist'] = str(os.environ['SLURM_JOB_NODELIST'])
 
-update_computesetjob.delay(request)
+update_computeset.delay(request)

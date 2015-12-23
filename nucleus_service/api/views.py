@@ -21,7 +21,7 @@ import subprocess
 
 from django.shortcuts import get_object_or_404
 
-from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computesetjob, attach_iso
+from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computeset, attach_iso
 import random
 
 from functools import wraps
@@ -302,7 +302,16 @@ class ComputeSetViewSet(ModelViewSet):
 
         cset = ComputeSet()
         cset.cluster = clust
+        cset.user = self.request.user.username
+        cset.account = clust.project
+        cset.walltime_mins = walltime_mins
+        cset.jobid = None
+        cset.name = None
+        cset.nodelist = ""
+        cset.state = ComputeSet.CSET_STATE_CREATED
+        cset.node_count = len(nodes)
         cset.save()
+
 
         for node in nodes:
             compute = Compute.objects.get(name=node, cluster=clust)
@@ -319,19 +328,8 @@ class ComputeSetViewSet(ModelViewSet):
 
             cset.computes.add(compute)
 
-        cset_job = ComputeSetJob()
-        cset_job.computeset_id = cset.id
-        cset_job.user = self.request.user.username
-        cset_job.account = clust.project
-        cset_job.walltime_mins = walltime_mins
-        cset_job.jobid = 0
-        cset_job.name = ""
-        cset_job.node_count = cset.computes.count()
-        cset_job.nodelist = ""
-        cset_job.state = ComputeSetJob.CSETJOB_STATE_SUBMITTED
-
-        serializer = ComputeSetJobSerializer(cset_job)
-        submit_computesetjob.delay(serializer.data)
+        serializer = ComputeSetSerializer(cset)
+        submit_computeset.delay(serializer.data)
 
         # We should only poweron computes after entering jobscript and
         # finishing the PROLOG on all allocated nodes. At that point the
@@ -339,8 +337,6 @@ class ComputeSetViewSet(ModelViewSet):
         #poweron_nodeset.delay(nodes, hosts)
 
         location = "/nucleus/v1/computeset/%s"%(cset.id)
-
-        serializer = ComputeSetSerializer(cset)
 
         response = Response(
             serializer.data,

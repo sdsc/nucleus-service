@@ -103,35 +103,32 @@ class Nonce(models.Model):
 # #################################################
 
 class ComputeSet(models.Model):
-    state = models.CharField(max_length=128, default="queued")
+    CSET_STATE_CREATED = 'created'
+    CSET_STATE_SUBMITTED = 'submitted'
+    CSET_STATE_FAILED = 'failed'
+    CSET_STATE_RUNNING = 'running'
+    CSET_STATE_COMPLETED = 'completed'
+    CSET_STATES = (
+        (CSET_STATE_CREATED, 'Created'),
+        (CSET_STATE_SUBMITTED, 'Submitted'),
+        (CSET_STATE_FAILED, 'Failed'),
+        (CSET_STATE_RUNNING, 'Running'),
+        (CSET_STATE_COMPLETED, 'Completed'),
+    )
     computes = models.ManyToManyField(Compute)
     cluster = models.ForeignKey(Cluster)
-
-    class Meta:
-        managed = True
-
-class ComputeSetJob(models.Model):
-    CSETJOB_STATE_SUBMITTED = 'submitted'
-    CSETJOB_STATE_FAILED = 'failed'
-    CSETJOB_STATE_RUNNING = 'running'
-    CSETJOB_STATE_COMPLETED = 'completed'
-    CSETJOB_STATES = (
-        (CSETJOB_STATE_SUBMITTED, 'Submitted'),
-        (CSETJOB_STATE_FAILED, 'Failed'),
-        (CSETJOB_STATE_RUNNING, 'Running'),
-        (CSETJOB_STATE_COMPLETED, 'Completed'),
-    )
     jobid = models.PositiveIntegerField(unique=True, null=True)
-    computeset = models.ForeignKey(ComputeSet, related_name='computesetjob')
-    name = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=64, unique=True, null=True)
     user = models.CharField(max_length=30)
     account = models.CharField(max_length=80)
     walltime_mins = models.PositiveIntegerField()
     nodelist = models.TextField(null=True)
     node_count = models.PositiveIntegerField(null=True)
     state = models.CharField(max_length=128,
-        choices=CSETJOB_STATES,
-        default=CSETJOB_STATE_SUBMITTED)
+        choices=CSET_STATES,
+        default=CSET_STATE_SUBMITTED)
+
 
     class Meta:
         managed = True
+

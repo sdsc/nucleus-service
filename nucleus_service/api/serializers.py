@@ -58,22 +58,7 @@ class ComputeSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputeSet
         fields = ['computes', 'id', 'state', 'cluster']
-        read_only_fields = ('id', 'state', 'cluster')
-
-class ComputeSetJobSerializer(serializers.ModelSerializer):
-    jobid = serializers.IntegerField()
-    computeset = serializers.SlugRelatedField(read_only=True, slug_field='id')
-    name = serializers.CharField(max_length=64, allow_null=True)
-    user = serializers.CharField()
-    account = serializers.CharField()
-    walltime_mins = serializers.IntegerField()
-    nodelist = serializers.CharField(allow_null=True)
-    node_count = serializers.IntegerField()
-    state = serializers.ChoiceField(ComputeSetJob.CSETJOB_STATES)
-    class Meta:
-        model = ComputeSetJob
-        fields = ['jobid', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'node_count', 'state']
-        read_only_fields = ('jobid', 'computeset', 'name', 'user', 'account', 'walltime_mins', 'nodelist', 'node_count', 'state')
+        read_only_fields = ('computes', 'id', 'state', 'cluster')
 
 class ClusterSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=100)
