@@ -171,10 +171,20 @@ def update_computeset(cset_json):
                     hosts = hostlist.expand_hostlist("%s" % cset.nodelist)
                     # TODO: anything else todo?
 
-            # Job passed from RUNNING to COMPLETED state...
+            # Job passed from RUNNING to ENDING state...
             if (
                 old_cset_state == ComputeSet.CSET_STATE_RUNNING and
-                cset.state == ComputeSet.CSET_STATE_COMPLETED
+                cset.state == ComputeSet.CSET_STATE_ENDING
+                ):
+                if cset.nodelist is not None:
+                    nodes = [compute['name'] for compute in cset.computes]
+                    poweroff_nodes.delay(nodes, "shutdown")
+                    # TODO: vlan & switchport de-configuration
+
+            # Job passed from RUNNING to CANCELLED state...
+            if (
+                old_cset_state == ComputeSet.CSET_STATE_RUNNING and
+                cset.state == ComputeSet.CSET_STATE_CANCELLED
                 ):
                 if cset.nodelist is not None:
                     nodes = [compute['name'] for compute in cset.computes]
