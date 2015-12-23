@@ -60,6 +60,14 @@ class ComputeSetSerializer(serializers.ModelSerializer):
         fields = ['computes', 'id', 'state', 'cluster']
         read_only_fields = ('computes', 'id', 'state', 'cluster')
 
+class FullComputeSetSerializer(serializers.ModelSerializer):
+    computes=ComputeSerializer(many=True, read_only=True)
+    cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    class Meta:
+        model = ComputeSet
+        fields = ['computes', 'id', 'state', 'cluster', 'user', 'account', 'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count']
+        read_only_fields = ('computes', 'id', 'state', 'cluster', 'user', 'account', 'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count')
+
 class ClusterSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=100)
     description = serializers.CharField(default="")
