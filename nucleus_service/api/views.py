@@ -328,8 +328,7 @@ class ComputeSetViewSet(ModelViewSet):
 
             cset.computes.add(compute)
 
-        serializer = ComputeSetSerializer(cset)
-        submit_computeset.delay(serializer.data)
+        submit_computeset.delay(FullComputeSetSerializer(cset).data)
 
         # We should only poweron computes after entering jobscript and
         # finishing the PROLOG on all allocated nodes. At that point the
@@ -338,6 +337,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         location = "/nucleus/v1/computeset/%s"%(cset.id)
 
+        serializer = ComputeSetSerializer(cset)
         response = Response(
             serializer.data,
             status=201,
