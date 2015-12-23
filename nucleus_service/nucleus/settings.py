@@ -125,7 +125,7 @@ REST_FRAMEWORK = {
 }
 
 CELERY_ROUTES = (   
-                    {'api.tasks.submit_computesetjob':
+                    {'api.tasks.submit_computeset':
                         {'routing_key': 'comet-fe1'}
                     },
                     {'api.tasks.poweron_nodeset': 
@@ -140,7 +140,7 @@ CELERY_ROUTES = (
                     {'api.tasks.attach_iso': 
                         {'routing_key': 'comet-fe1'}
                     },
-                    {'api.tasks.update_computesetjob':
+                    {'api.tasks.update_computeset':
                         {'routing_key': 'update'}
                     },
                     {'api.tasks.update_clusters': 
