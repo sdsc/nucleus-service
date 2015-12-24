@@ -79,7 +79,7 @@ def cancel_computeset(cset):
         limit and is signalled by Slurm to exit.
         Actual poweroff of the nodes is handled by the jobscript and/or epilog.
     """
-    from api.tasks import update_computesetjob
+    from api.tasks import update_computeset
 
     cmd = ['/usr/bin/timeout',
         '2',
@@ -107,7 +107,7 @@ def cancel_computeset(cset):
             msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
 
-
+@shared_task(ignore_result=True)
 def update_computeset(cset_json):
     """ This task runs on comet-nucleus and can update the database """
     from api.models import ComputeSet
@@ -177,7 +177,10 @@ def update_computeset(cset_json):
                 cset.state == ComputeSet.CSET_STATE_ENDING
                 ):
                 if cset.nodelist is not None:
-                    nodes = [compute['name'] for compute in cset.computes]
+                    nodes = []
+                    for compute in cset.computes.all():
+                        nodes.append(compute.rocks_name)
+
                     poweroff_nodes.delay(nodes, "shutdown")
                     # TODO: vlan & switchport de-configuration
 
@@ -330,8 +333,8 @@ def update_clusters(clusters_json):
                 try:
                     cset = ComputeSet.objects.get(computes__id__exact=compute_obj.id,
                             state__in=[CSET_STATE_RUNNING])
-                    if cset.state == CSET_STATE_RUNNING
-                        and not cset.computes.filter(state="active"):
+                    if (cset.state == CSET_STATE_RUNNING
+                        and not cset.computes.filter(state="active")):
                         cancel_computeset.delay(cset)
                 except ComputeSet.DoesNotExist:
                     print "Computeset for compute %s not found"%compute_obj.name
