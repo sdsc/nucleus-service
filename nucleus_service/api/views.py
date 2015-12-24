@@ -272,7 +272,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "poweroff")
 
-        cancel_computeset.delay(cset)
+        cancel_computeset.delay(FullComputeSetSerializer(cset).data)
 
         return Response(status=204)
 
@@ -359,7 +359,7 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "shutdown")
 
-        cancel_computeset.delay(cset)
+        cancel_computeset.delay(FullComputeSetSerializer(cset).data)
 
         return Response(status=204)
 
