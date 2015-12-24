@@ -45,6 +45,7 @@ class ClusterViewSet(ModelViewSet):
     serializer_class = ClusterSerializer
 
     def get_queryset(self):
+        """Obtain details about all clusters."""
         clusters = Cluster.objects.filter(project__in=self.request.user.groups.all())
         return clusters
 
@@ -82,6 +83,8 @@ class ComputeViewSet(ViewSet):
 
     @detail_route(methods=['put'])
     def shutdown(self, request, compute_name_cluster_name, compute_name, format=None):
+        """Shutdown the named compute resource in a named cluster.
+        """
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -90,6 +93,8 @@ class ComputeViewSet(ViewSet):
 
     @detail_route(methods=['put'])
     def reboot(self, request, compute_name_cluster_name, compute_name, format=None):
+        """Reboot the named compute resource in a named cluster.
+        """
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -98,6 +103,8 @@ class ComputeViewSet(ViewSet):
 
     @detail_route(methods=['put'])
     def reset(self, request, compute_name_cluster_name, compute_name, format=None):
+        """Reset the named compute resource in a named cluster.
+        """
         compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -143,6 +150,7 @@ class ComputeViewSet(ViewSet):
 ##################################################
 
 def get_console(console_compute_name):
+    """Open VNC console to named resource."""
     resp = "Success"
     sleep_time = 15
 
@@ -222,6 +230,7 @@ def get_console(console_compute_name):
     return response
 
 class ConsoleViewSet(ViewSet):
+    """Open VNC console to named compute resource."""
     def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
         compute = get_object_or_404(Compute, name=console_compute_name, cluster__name = compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
@@ -229,6 +238,7 @@ class ConsoleViewSet(ViewSet):
         return get_console(console_compute_name)
 
 class FrontendConsoleViewSet(ViewSet):
+    """Open VNC console to name frontend resource."""
     def retrieve(self, request, console_cluster_name, format=None):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if(not clust.project in request.user.groups.all()):
@@ -245,6 +255,7 @@ class ComputeSetViewSet(ModelViewSet):
     serializer_class = ComputeSetSerializer
 
     def get_queryset(self):
+        """Obtain the details of all ComputeSets."""
         cset = ComputeSet.objects.filter(cluster__project__in=self.request.user.groups.all())
 
         state = self.request.query_params.get('state', None)
@@ -253,6 +264,7 @@ class ComputeSetViewSet(ModelViewSet):
         return cset
 
     def retrieve(self, request, computeset_id, format=None):
+        """Obtain the details of the identified ComputeSet."""
         cset = get_object_or_404(ComputeSet, pk=computeset_id)
         if(not cset.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -261,7 +273,7 @@ class ComputeSetViewSet(ModelViewSet):
 
     @detail_route(methods=['put'])
     def poweroff(self, request, computeset_id, format=None):
-        """Power off the named nodeset."""
+        """Power off the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
         if(not cset.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -277,7 +289,7 @@ class ComputeSetViewSet(ModelViewSet):
         return Response(status=204)
 
     def poweron(self, request, format=None):
-        """ Power on a set of nodes """
+        """ Power on a set of computes creating a ComputeSet."""
         clust = get_object_or_404(Cluster, name=request.data["cluster"])
         if(not clust.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -349,6 +361,7 @@ class ComputeSetViewSet(ModelViewSet):
 
     @detail_route(methods=['put'])
     def shutdown(self, request, computeset_id, format=None):
+        """Shutdown the nodes in the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
         if(not cset.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -365,6 +378,7 @@ class ComputeSetViewSet(ModelViewSet):
 
     @detail_route(methods=['put'])
     def reboot(self, request, computeset_id, format=None):
+        """Reboot the nodes in the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
         if(not cset.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -379,6 +393,7 @@ class ComputeSetViewSet(ModelViewSet):
 
     @detail_route(methods=['put'])
     def reset(self, request, computeset_id, format=None):
+        """Reset the nodes in the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
         if(not cset.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
@@ -474,6 +489,7 @@ class UserDetailsView(RetrieveUpdateAPIView):
 
 
 class ProjectListView(ListAPIView):
+    """Returns project details."""
     serializer_class = ProjectSerializer
     def get_queryset(self):
         return self.request.user.groups.all()
