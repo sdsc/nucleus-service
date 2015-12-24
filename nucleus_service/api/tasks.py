@@ -332,8 +332,8 @@ def update_clusters(clusters_json):
                 compute_obj.save()
                 try:
                     cset = ComputeSet.objects.get(computes__id__exact=compute_obj.id,
-                            state__in=[CSET_STATE_RUNNING])
-                    if (cset.state == CSET_STATE_RUNNING
+                            state__in=[ComputeSet.CSET_STATE_RUNNING])
+                    if (cset.state == ComputeSet.CSET_STATE_RUNNING
                         and not cset.computes.filter(state="active")):
                         cancel_computeset.delay(cset)
                 except ComputeSet.DoesNotExist:
