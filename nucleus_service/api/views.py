@@ -21,7 +21,7 @@ import subprocess
 
 from django.shortcuts import get_object_or_404
 
-from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computeset, attach_iso
+from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computeset, cancel_computeset, attach_iso
 import random
 
 from functools import wraps
@@ -272,6 +272,8 @@ class ComputeSetViewSet(ModelViewSet):
 
         poweroff_nodes.delay(computes, "poweroff")
 
+        cancel_computeset.delay(FullComputeSetSerializer(cset).data)
+
         return Response(status=204)
 
     def poweron(self, request, format=None):
@@ -316,7 +318,7 @@ class ComputeSetViewSet(ModelViewSet):
         for node in nodes:
             compute = Compute.objects.get(name=node, cluster=clust)
 
-            other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(state__exact = COMPUTESET_STATE_COMPLETED)
+            other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(state__exact = ComputeSet.CSET_STATE_COMPLETED)
             if(other_cs_query.exists()):
                 cset.delete()
                 err_cs = other_cs_query.get()
@@ -356,6 +358,8 @@ class ComputeSetViewSet(ModelViewSet):
             computes.append(compute.rocks_name)
 
         poweroff_nodes.delay(computes, "shutdown")
+
+        cancel_computeset.delay(FullComputeSetSerializer(cset).data)
 
         return Response(status=204)
 

@@ -5,10 +5,6 @@ from django.contrib.auth import get_user_model, authenticate
 
 import subprocess
 
-COMPUTESET_STATE_QUEUED = "queued"
-COMPUTESET_STATE_COMPLETED = "completed"
-COMPUTESET_STATE_STARTED = "started"
-
 # #################################################
 #  FRONTEND
 # #################################################
@@ -107,12 +103,16 @@ class ComputeSet(models.Model):
     CSET_STATE_SUBMITTED = 'submitted'
     CSET_STATE_FAILED = 'failed'
     CSET_STATE_RUNNING = 'running'
+    CSET_STATE_CANCELLED = 'cancelled'
+    CSET_STATE_ENDING = 'ending'
     CSET_STATE_COMPLETED = 'completed'
     CSET_STATES = (
         (CSET_STATE_CREATED, 'Created'),
         (CSET_STATE_SUBMITTED, 'Submitted'),
         (CSET_STATE_FAILED, 'Failed'),
         (CSET_STATE_RUNNING, 'Running'),
+        (CSET_STATE_CANCELLED, 'Cancelled'),
+        (CSET_STATE_ENDING, 'Ending'),
         (CSET_STATE_COMPLETED, 'Completed'),
     )
     computes = models.ManyToManyField(Compute)
@@ -126,9 +126,7 @@ class ComputeSet(models.Model):
     node_count = models.PositiveIntegerField(null=True)
     state = models.CharField(max_length=128,
         choices=CSET_STATES,
-        default=CSET_STATE_SUBMITTED)
-
+        default=CSET_STATE_CREATED)
 
     class Meta:
         managed = True
-
