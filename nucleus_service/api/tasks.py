@@ -121,32 +121,32 @@ def update_computeset(cset_json):
 
         cset.jobid = cset_json["jobid"]
 
-        if ("name" in cset_json):
+        if "name" in cset_json:
             cset.name = cset_json["name"]
 
-        if ("user" in cset_json):
+        if "user" in cset_json:
             cset.user = cset_json["user"]
 
-        if("account" in cset_json):
+        if "account" in cset_json:
             cset.account = cset_json["account"]
 
-        if ("walltime_mins" in cset_json):
+        if "walltime_mins" in cset_json:
             cset.walltime_mins = cset_json["walltime_mins"]
 
-        if ("node_count" in cset_json):
+        if "node_count" in cset_json:
             cset.node_count = cset_json["node_count"]
 
         cset.save()
 
         # The following will only exist after jobscript barrier...
-        if ("nodelist" in cset_json):
+        if "nodelist" in cset_json:
             cset.nodelist = cset_json["nodelist"]
             cset.save()
 
         old_cset_state = None
-        if ("state" in cset_json):
+        if "state" in cset_json:
             old_cset_state = cset.state
-            if (cset.state != cset_json["state"]):
+            if cset.state != cset_json["state"]:
                 cset.state = cset_json["state"]
                 cset.save()
 
@@ -205,13 +205,13 @@ def update_computeset(cset_json):
 
 @shared_task(ignore_result=True)
 def poweron_nodeset(nodes, hosts, iso_name):
-    if(hosts and (len(nodes) != len(hosts))):
+    if hosts and (len(nodes) != len(hosts)):
         print "hosts length is not equal to nodes"
         return
     outb = ""
     errb = ""
 
-    if(hosts):
+    if hosts:
         for node, host in zip(nodes, hosts):
             res = Popen(["/opt/rocks/bin/rocks", "set", "host", "vm", "%s" %
                          node, "physnode=%s" % host], stdout=PIPE, stderr=PIPE)
@@ -219,15 +219,15 @@ def poweron_nodeset(nodes, hosts, iso_name):
             outb += out
             errb += err
 
-    if(iso_name):
+    if iso_name:
         (ret_code, out, err) = _attach_iso(nodes, iso_name)
-        if(ret_code):
+        if ret_code:
             outb += out
             errb += err
             return "Error adding iso to nodes: %s\n%s" % (outb, errb)
 
     (ret_code, out, err) = _poweron_nodes(nodes)
-    if (ret_code):
+    if ret_code:
         outb += out
         errb += err
         return "Error powering on nodes: %s\n%s" % (outb, errb)
@@ -236,7 +236,7 @@ def poweron_nodeset(nodes, hosts, iso_name):
 @shared_task(ignore_result=True)
 def poweroff_nodes(nodes, action):
     (ret_code, out, err) = _poweroff_nodes(nodes, action)
-    if (ret_code):
+    if ret_code:
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
@@ -254,7 +254,7 @@ def _poweroff_nodes(nodes, action):
 @shared_task(ignore_result=True)
 def attach_iso(nodes, iso_name):
     (ret_code, out, err) = _attach_iso(nodes, iso_name)
-    if(ret_code):
+    if ret_code:
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
@@ -263,7 +263,7 @@ def attach_iso(nodes, iso_name):
 def _attach_iso(nodes, iso_name):
     args = ["/opt/rocks/bin/rocks", "set", "host", "vm", "cdrom"]
     args.extend(nodes)
-    if(iso_name):
+    if iso_name:
         args.append("cdrom=%s/%s" % (ISOS_DIR, iso_name))
     else:
         args.append("cdrom=none")
@@ -275,7 +275,7 @@ def _attach_iso(nodes, iso_name):
 @shared_task(ignore_result=True)
 def poweron_nodes(nodes):
     (ret_code, out, err) = _poweron_nodes(nodes)
-    if (ret_code):
+    if ret_code:
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
@@ -297,13 +297,15 @@ def update_clusters(clusters_json):
             cluster_obj = Cluster.objects.get(
                 frontend__rocks_name=cluster_rocks["frontend"])
 
-            if(cluster_obj.vlan != cluster_rocks["vlan"]):
+            if cluster_obj.vlan != cluster_rocks["vlan"]:
                 cluster_obj.vlan = cluster_rocks["vlan"]
                 cluster_obj.save()
 
             frontend = Frontend.objects.get(
                 rocks_name=cluster_rocks["frontend"])
-            if(frontend.state != cluster_rocks["state"] or frontend.memory != cluster_rocks["mem"] or frontend.cpus != cluster_rocks["cpus"]):
+            if(frontend.state != cluster_rocks["state"]
+                or frontend.memory != cluster_rocks["mem"]
+                or frontend.cpus != cluster_rocks["cpus"]):
                 frontend.state = cluster_rocks["state"]
                 frontend.memory = cluster_rocks["mem"]
                 frontend.cpus = cluster_rocks["cpus"]
@@ -335,7 +337,7 @@ def update_clusters(clusters_json):
         for compute_rocks in cluster_rocks["computes"]:
             compute_obj, created = Compute.objects.get_or_create(
                 rocks_name=compute_rocks["name"], cluster=cluster_obj)
-            if(created):
+            if created:
                 compute_obj.name = compute_rocks["name"]
                 compute_obj.state = compute_rocks["state"]
                 compute_obj.memory = compute_rocks["mem"]
@@ -359,6 +361,6 @@ def update_clusters(clusters_json):
                     print traceback.format_exc()
 
             for interface in compute_rocks['interfaces']:
-                if(interface["mac"]):
+                if interface["mac"]:
                     if_obj, created = ComputeInterface.objects.update_or_create(compute=compute_obj, ip=interface["ip"], netmask=interface[
                                                                                 "netmask"], mac=interface["mac"], iface=interface["iface"], subnet=interface["subnet"])

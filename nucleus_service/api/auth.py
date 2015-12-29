@@ -39,7 +39,7 @@ class NucleusAPISignatureAuthentication(SignatureAuthentication):
 
         ts_diff = int(time.time()) - int(ts)
 
-        if(abs(ts_diff) > self.TIME_BACK):
+        if abs(ts_diff) > self.TIME_BACK:
             raise exceptions.AuthenticationFailed(
                 'Timestamp is more than %s minutes different from the server.' % TIME_BACK)
 

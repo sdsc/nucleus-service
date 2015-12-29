@@ -40,7 +40,7 @@ class ClusterViewSet(ModelViewSet):
     def retrieve(self, request, cluster_name, format=None):
         """Obtain details about the named cluster."""
         clust = get_object_or_404(Cluster, name=cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         serializer = ClusterSerializer(clust)
         return Response(serializer.data)
@@ -63,7 +63,7 @@ class ComputeViewSet(ViewSet):
         """Obtain the details of a named compute resource in a named cluster."""
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         serializer = ComputeSerializer(compute)
         return Response(serializer.data)
@@ -78,7 +78,7 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all:
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
         return Response(status=204)
@@ -89,7 +89,7 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reboot")
         return Response(status=204)
@@ -100,7 +100,7 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reset")
         return Response(status=204)
@@ -111,7 +111,7 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "poweroff")
         return Response(status=204)
@@ -122,7 +122,7 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         poweron_nodes.delay([compute.rocks_name])
         return Response(status=204)
@@ -133,9 +133,9 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
-        if(not "iso_name" in request.GET):
+        if not "iso_name" in request.GET:
             return Response("Please provide the iso_name", status=400)
         attach_iso.delay([compute.rocks_name], request.GET["iso_name"])
         return Response(status=204)
@@ -231,7 +231,7 @@ class ConsoleViewSet(ViewSet):
     def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
         compute = get_object_or_404(
             Compute, name=console_compute_name, cluster__name=compute_name_cluster_name)
-        if(not compute.cluster.project in request.user.groups.all()):
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         return get_console(console_compute_name)
 
@@ -241,7 +241,7 @@ class FrontendConsoleViewSet(ViewSet):
 
     def retrieve(self, request, console_cluster_name, format=None):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         return get_console(clust.frontend.rocks_name)
 
@@ -267,7 +267,7 @@ class ComputeSetViewSet(ModelViewSet):
     def retrieve(self, request, computeset_id, format=None):
         """Obtain the details of the identified ComputeSet."""
         cset = get_object_or_404(ComputeSet, pk=computeset_id)
-        if(not cset.cluster.project in request.user.groups.all()):
+        if not cset.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         serializer = ComputeSetSerializer(cset)
         return Response(serializer.data)
@@ -276,7 +276,7 @@ class ComputeSetViewSet(ModelViewSet):
     def poweroff(self, request, computeset_id, format=None):
         """Power off the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
-        if(not cset.cluster.project in request.user.groups.all()):
+        if not cset.cluster.project in request.user.groups.all():
             raise PermissionDenied()
 
         computes = []
@@ -292,27 +292,27 @@ class ComputeSetViewSet(ModelViewSet):
     def poweron(self, request, format=None):
         """ Power on a set of computes creating a ComputeSet."""
         clust = get_object_or_404(Cluster, name=request.data["cluster"])
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
 
         walltime_mins = request.data.get("walltime_mins")
-        if(not walltime_mins):
+        if not walltime_mins:
             return Response("You must provide a walltime (minutes) value as walltime_mins attribute.",
                             status=status.HTTP_400_BAD_REQUEST)
 
         nodes = []
         hosts = []
 
-        if(request.data["computes"] is list):
+        if request.data["computes"] is list:
             for obj in request.data["computes"]:
                 nodes.append(obj["name"])
                 hosts.append(obj["host"])
         else:
             nodes = hostlist.expand_hostlist("%s" % request.data["computes"])
-            if(request.data.get("hosts")):
+            if request.data.get("hosts"):
                 hosts = hostlist.expand_hostlist("%s" % request.data["hosts"])
 
-        if(hosts and len(nodes) != len(hosts)):
+        if hosts and len(nodes) != len(hosts):
             return Response("The length of hosts should be equal to length of nodes",
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -333,12 +333,12 @@ class ComputeSetViewSet(ModelViewSet):
 
             other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(
                 state__exact=ComputeSet.CSET_STATE_COMPLETED)
-            if(other_cs_query.exists()):
+            if other_cs_query.exists():
                 cset.delete()
                 err_cs = other_cs_query.get()
                 return Response("The compute %s belongs to computeset %s which is in %s state" % (node, err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
 
-            if(compute.cluster.name != request.data["cluster"]):
+            if compute.cluster.name != request.data["cluster"]:
                 cset.delete()
                 return Response("The node %s does not belong to the cluster %s, belongs to %s" % (node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
 
@@ -365,7 +365,7 @@ class ComputeSetViewSet(ModelViewSet):
     def shutdown(self, request, computeset_id, format=None):
         """Shutdown the nodes in the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
-        if(not cset.cluster.project in request.user.groups.all()):
+        if not cset.cluster.project in request.user.groups.all():
             raise PermissionDenied()
 
         computes = []
@@ -382,7 +382,7 @@ class ComputeSetViewSet(ModelViewSet):
     def reboot(self, request, computeset_id, format=None):
         """Reboot the nodes in the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
-        if(not cset.cluster.project in request.user.groups.all()):
+        if not cset.cluster.project in request.user.groups.all():
             raise PermissionDenied()
 
         computes = []
@@ -397,7 +397,7 @@ class ComputeSetViewSet(ModelViewSet):
     def reset(self, request, computeset_id, format=None):
         """Reset the nodes in the identified ComputeSet."""
         cset = ComputeSet.objects.get(pk=computeset_id)
-        if(not cset.cluster.project in request.user.groups.all()):
+        if not cset.cluster.project in request.user.groups.all():
             raise PermissionDenied()
 
         computes = []
@@ -418,7 +418,7 @@ class FrontendViewSet(ViewSet):
     def retrieve(self, request, frontend_cluster_name, format=None):
         """Obtain the details of a frontend resource in a named cluster."""
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         serializer = FrontendSerializer(clust.frontend)
         return Response(serializer.data)
@@ -427,7 +427,7 @@ class FrontendViewSet(ViewSet):
     def shutdown(self, request, frontend_cluster_name, format=None):
         """Shutdown the frontend of a named cluster."""
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "shutdown")
         return Response(status=204)
@@ -436,7 +436,7 @@ class FrontendViewSet(ViewSet):
     def reboot(self, request, frontend_cluster_name, format=None):
         """Reboot the frontend of a named cluster."""
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "reboot")
         return Response(status=204)
@@ -450,7 +450,7 @@ class FrontendViewSet(ViewSet):
     def poweron(self, request, frontend_cluster_name, format=None):
         """Power on the frontend of a named cluster."""
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         poweron_nodes.delay([clust.frontend.rocks_name])
         return Response(status=204)
@@ -459,7 +459,7 @@ class FrontendViewSet(ViewSet):
     def poweroff(self, request, frontend_cluster_name, format=None):
         """Power off the frontend of a named cluster."""
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
-        if(not clust.project in request.user.groups.all()):
+        if not clust.project in request.user.groups.all():
             raise PermissionDenied()
         poweroff_nodes.delay([clust.frontend.rocks_name], "poweroff")
         return Response(status=204)
@@ -508,10 +508,10 @@ class ImageUploadView(APIView):
         file_obj = request.FILES['file']
         #filepath = '/mnt/images/%s/%s'%(groups[0].name, file_obj.name)
         filepath = '/mnt/images/public/%s' % (file_obj.name)
-        if(not request.META.get('HTTP_MD5')):
+        if not request.META.get('HTTP_MD5'):
             return Response("md5 was not provided", status=400)
 
-        if(request.META['HTTP_MD5'] != md5_for_file(file_obj.chunks())):
+        if request.META['HTTP_MD5'] != md5_for_file(file_obj.chunks()):
             return Response("md5 does not match the file", status=400)
 
         with open(filepath, 'wb+') as destination:
