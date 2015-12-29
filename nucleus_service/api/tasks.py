@@ -15,7 +15,6 @@ def submit_computeset(cset):
         In addition, since django.db modules are not installed on comet-fe1
         we need to use json module to deserialize/serialize JSON.
     """
-    from api.tasks import update_computeset
     import uuid
 
     cset["name"] = "VC-JOB-%s-%s" % (cset["id"],
@@ -82,7 +81,6 @@ def cancel_computeset(cset):
         limit and is signalled by Slurm to exit.
         Actual poweroff of the nodes is handled by the jobscript and/or epilog.
     """
-    from api.tasks import update_computeset
 
     cmd = ['/usr/bin/timeout',
            '2',
