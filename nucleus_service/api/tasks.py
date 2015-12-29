@@ -322,9 +322,10 @@ def update_clusters(clusters_json):
             frontend__rocks_name=cluster_rocks["frontend"])
         frontend = Frontend.objects.get(rocks_name=cluster_rocks["frontend"])
         for interface in cluster_rocks['interfaces']:
-            if(interface["mac"]):
-                if_obj, created = FrontendInterface.objects.update_or_create(frontend=frontend, ip=interface["ip"], netmask=interface[
-                                                                             "netmask"], mac=interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
+            if interface["mac"]:
+                if_obj, created = FrontendInterface.objects.update_or_create(
+                    frontend=frontend, ip=interface["ip"], netmask=interface["netmask"],
+                    mac=interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
 
         for compute_rocks in cluster_rocks["computes"]:
             compute_obj, created = Compute.objects.get_or_create(
