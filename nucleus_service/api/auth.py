@@ -6,11 +6,13 @@ from rest_framework import exceptions
 import time
 
 import traceback
+
+
 class NucleusAPISignatureAuthentication(SignatureAuthentication):
     # The HTTP header used to pass the consumer key ID.
     # Defaults to 'X-Api-Key'.
     API_KEY_HEADER = 'X-Api-Key'
-    TIME_BACK = 30*60
+    TIME_BACK = 30 * 60
 
     # A method to fetch (User instance, user_secret_string) from the
     # consumer key ID, or None in case it is not found.
@@ -39,13 +41,13 @@ class NucleusAPISignatureAuthentication(SignatureAuthentication):
         ts_diff = int(time.time()) - int(ts)
 
         if(abs(ts_diff) > self.TIME_BACK):
-            raise exceptions.AuthenticationFailed('Timestamp is more than %s minutes different from the server.'%TIME_BACK)
+            raise exceptions.AuthenticationFailed(
+                'Timestamp is more than %s minutes different from the server.' % TIME_BACK)
 
         try:
-            nonce = Nonce(nonce = nonce, timestamp = ts)
+            nonce = Nonce(nonce=nonce, timestamp=ts)
             nonce.save(force_insert=True)
         except:
             raise exceptions.AuthenticationFailed('Nonce check failed')
-
 
         return SignatureAuthentication.authenticate(self, request)

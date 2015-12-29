@@ -31,7 +31,9 @@ from celery.result import AsyncResult
 import time
 import json
 import hostlist
-import os,sys,hashlib
+import os
+import sys
+import hashlib
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -40,13 +42,15 @@ from django.core.files.storage import default_storage
 #  CLUSTER
 # #################################################
 
+
 class ClusterViewSet(ModelViewSet):
     lookup_field = 'cluster_name'
     serializer_class = ClusterSerializer
 
     def get_queryset(self):
         """Obtain details about all clusters."""
-        clusters = Cluster.objects.filter(project__in=self.request.user.groups.all())
+        clusters = Cluster.objects.filter(
+            project__in=self.request.user.groups.all())
         return clusters
 
     def retrieve(self, request, cluster_name, format=None):
@@ -65,13 +69,16 @@ class ClusterViewSet(ModelViewSet):
 #  COMPUTE
 # #################################################
 
+
 class ComputeViewSet(ViewSet):
     lookup_field = 'compute_name'
 
     serializer_class = ClusterSerializer
+
     def retrieve(self, request, compute_name_cluster_name, compute_name, format=None):
         """Obtain the details of a named compute resource in a named cluster."""
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         serializer = ComputeSerializer(compute)
@@ -85,7 +92,8 @@ class ComputeViewSet(ViewSet):
     def shutdown(self, request, compute_name_cluster_name, compute_name, format=None):
         """Shutdown the named compute resource in a named cluster.
         """
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
@@ -95,7 +103,8 @@ class ComputeViewSet(ViewSet):
     def reboot(self, request, compute_name_cluster_name, compute_name, format=None):
         """Reboot the named compute resource in a named cluster.
         """
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reboot")
@@ -105,7 +114,8 @@ class ComputeViewSet(ViewSet):
     def reset(self, request, compute_name_cluster_name, compute_name, format=None):
         """Reset the named compute resource in a named cluster.
         """
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "reset")
@@ -115,7 +125,8 @@ class ComputeViewSet(ViewSet):
     def poweroff(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power off the named compute resource in a named cluster.
         """
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweroff_nodes.delay([compute.rocks_name], "poweroff")
@@ -125,18 +136,19 @@ class ComputeViewSet(ViewSet):
     def poweron(self, request, compute_name_cluster_name, compute_name, format=None):
         """Power on the named compute resource in a named cluster.
         """
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         poweron_nodes.delay([compute.rocks_name])
         return Response(status=204)
 
-
     @detail_route(methods=['put'])
     def attach_iso(self, request, compute_name_cluster_name, compute_name, format=None):
         """Attach an ISO to the named compute resource in a named cluster.
         """
-        compute = get_object_or_404(Compute, name=compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         if(not "iso_name" in request.GET):
@@ -156,66 +168,65 @@ def get_console(console_compute_name):
 
     # Set random VNC password for guest valid for sleep_time
     cmd = ['/usr/bin/sudo',
-            '-u',
-            'nucleus_comet',
-            '/home/nucleus_comet/bin/set_vnc_passwd.py',
-            '-G',
-            '{guest}'.format(guest=console_compute_name),
-            '-s',
-            '{duration}'.format(duration=sleep_time)]
+           '-u',
+           'nucleus_comet',
+           '/home/nucleus_comet/bin/set_vnc_passwd.py',
+           '-G',
+           '{guest}'.format(guest=console_compute_name),
+           '-s',
+           '{duration}'.format(duration=sleep_time)]
     try:
-            retcode = subprocess.call(cmd)
-            if retcode < 0:
-                    resp = "Child was terminated by signal %d" % (-retcode)
-                    return Response(resp)
-
-    except OSError as e:
-            resp = "Execution failed: %s" % (e)
+        retcode = subprocess.call(cmd)
+        if retcode < 0:
+            resp = "Child was terminated by signal %d" % (-retcode)
             return Response(resp)
 
+    except OSError as e:
+        resp = "Execution failed: %s" % (e)
+        return Response(resp)
 
     # Get VNC connection params...
     cmd = ['/usr/bin/sudo',
-            '-u',
-            'nucleus_comet',
-            '/home/nucleus_comet/bin/get_vnc_params.py',
-            '-G',
-            '{guest}'.format(guest=console_compute_name)]
+           '-u',
+           'nucleus_comet',
+           '/home/nucleus_comet/bin/get_vnc_params.py',
+           '-G',
+           '{guest}'.format(guest=console_compute_name)]
     try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
     except OSError as e:
-            resp = "Execution failed: %s" % (e)
-            return Response(resp)
+        resp = "Execution failed: %s" % (e)
+        return Response(resp)
 
     params = ''
-    for line in iter(proc.stdout.readline,''):
-            import re
-            params += line.rstrip().strip()
+    for line in iter(proc.stdout.readline, ''):
+        import re
+        params += line.rstrip().strip()
 
     vnc_conn = json.loads(params)[0]["vnc"][0]
-    #return Response(params)
-    (phys_host, passwd, port) = (vnc_conn["phys-host"], vnc_conn["password"], vnc_conn["port"])
-
+    # return Response(params)
+    (phys_host, passwd, port) = (vnc_conn[
+        "phys-host"], vnc_conn["password"], vnc_conn["port"])
 
     # Open tunnel from localhost -> phys-host:port...
     cmd = ['/usr/bin/sudo',
-            '-u',
-            'nucleus_comet',
-            '/home/nucleus_comet/bin/open_tunnel.py',
-            '-H',
-            '{hostname}'.format(hostname=phys_host),
-            '-p',
-            '{hostport}'.format(hostport=port),
-            '-s',
-            '{duration}'.format(duration=sleep_time)]
+           '-u',
+           'nucleus_comet',
+           '/home/nucleus_comet/bin/open_tunnel.py',
+           '-H',
+           '{hostname}'.format(hostname=phys_host),
+           '-p',
+           '{hostport}'.format(hostport=port),
+           '-s',
+           '{duration}'.format(duration=sleep_time)]
 
     try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
     except OSError as e:
-            resp = "Execution failed: %s" % (e)
-            return Response(resp)
+        resp = "Execution failed: %s" % (e)
+        return Response(resp)
 
     tun_port = ''
 
@@ -229,16 +240,21 @@ def get_console(console_compute_name):
         headers={'Location': url})
     return response
 
+
 class ConsoleViewSet(ViewSet):
     """Open VNC console to named compute resource."""
+
     def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
-        compute = get_object_or_404(Compute, name=console_compute_name, cluster__name = compute_name_cluster_name)
+        compute = get_object_or_404(
+            Compute, name=console_compute_name, cluster__name=compute_name_cluster_name)
         if(not compute.cluster.project in request.user.groups.all()):
             raise PermissionDenied()
         return get_console(console_compute_name)
 
+
 class FrontendConsoleViewSet(ViewSet):
     """Open VNC console to name frontend resource."""
+
     def retrieve(self, request, console_cluster_name, format=None):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if(not clust.project in request.user.groups.all()):
@@ -256,7 +272,8 @@ class ComputeSetViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Obtain the details of all ComputeSets."""
-        cset = ComputeSet.objects.filter(cluster__project__in=self.request.user.groups.all())
+        cset = ComputeSet.objects.filter(
+            cluster__project__in=self.request.user.groups.all())
 
         state = self.request.query_params.get('state', None)
         if state is not None:
@@ -297,7 +314,7 @@ class ComputeSetViewSet(ModelViewSet):
         walltime_mins = request.data.get("walltime_mins")
         if(not walltime_mins):
             return Response("You must provide a walltime (minutes) value as walltime_mins attribute.",
-                status=status.HTTP_400_BAD_REQUEST)
+                            status=status.HTTP_400_BAD_REQUEST)
 
         nodes = []
         hosts = []
@@ -307,12 +324,13 @@ class ComputeSetViewSet(ModelViewSet):
                 nodes.append(obj["name"])
                 hosts.append(obj["host"])
         else:
-            nodes = hostlist.expand_hostlist("%s"%request.data["computes"])
+            nodes = hostlist.expand_hostlist("%s" % request.data["computes"])
             if(request.data.get("hosts")):
-                hosts = hostlist.expand_hostlist("%s"%request.data["hosts"])
+                hosts = hostlist.expand_hostlist("%s" % request.data["hosts"])
 
         if(hosts and len(nodes) != len(hosts)):
-            return Response("The length of hosts should be equal to length of nodes", status=status.HTTP_400_BAD_REQUEST)
+            return Response("The length of hosts should be equal to length of nodes",
+                            status=status.HTTP_400_BAD_REQUEST)
 
         cset = ComputeSet()
         cset.cluster = clust
@@ -326,19 +344,19 @@ class ComputeSetViewSet(ModelViewSet):
         cset.node_count = len(nodes)
         cset.save()
 
-
         for node in nodes:
             compute = Compute.objects.get(name=node, cluster=clust)
 
-            other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(state__exact = ComputeSet.CSET_STATE_COMPLETED)
+            other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(
+                state__exact=ComputeSet.CSET_STATE_COMPLETED)
             if(other_cs_query.exists()):
                 cset.delete()
                 err_cs = other_cs_query.get()
-                return Response("The compute %s belongs to computeset %s which is in %s state"%(node, err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
+                return Response("The compute %s belongs to computeset %s which is in %s state" % (node, err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
 
             if(compute.cluster.name != request.data["cluster"]):
                 cset.delete()
-                return Response("The node %s does not belong to the cluster %s, belongs to %s"%(node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
+                return Response("The node %s does not belong to the cluster %s, belongs to %s" % (node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
 
             cset.computes.add(compute)
 
@@ -349,7 +367,7 @@ class ComputeSetViewSet(ModelViewSet):
         # nodelist will be returned and we can call poweron_nodeset()
         #poweron_nodeset.delay(nodes, hosts)
 
-        location = "/nucleus/v1/computeset/%s"%(cset.id)
+        location = "/nucleus/v1/computeset/%s" % (cset.id)
 
         serializer = ComputeSetSerializer(cset)
         response = Response(
@@ -410,6 +428,7 @@ class ComputeSetViewSet(ModelViewSet):
 #  FRONTEND
 # #################################################
 
+
 class FrontendViewSet(ViewSet):
 
     def retrieve(self, request, frontend_cluster_name, format=None):
@@ -465,6 +484,7 @@ class FrontendViewSet(ViewSet):
 #  USER
 # #################################################
 
+
 class UserDetailsView(RetrieveUpdateAPIView):
 
     """
@@ -491,6 +511,7 @@ class UserDetailsView(RetrieveUpdateAPIView):
 class ProjectListView(ListAPIView):
     """Returns project details."""
     serializer_class = ProjectSerializer
+
     def get_queryset(self):
         return self.request.user.groups.all()
 
@@ -502,7 +523,7 @@ class ImageUploadView(APIView):
         groups = request.user.groups.all()
         file_obj = request.FILES['file']
         #filepath = '/mnt/images/%s/%s'%(groups[0].name, file_obj.name)
-        filepath = '/mnt/images/public/%s'%(file_obj.name)
+        filepath = '/mnt/images/public/%s' % (file_obj.name)
         if(not request.META.get('HTTP_MD5')):
             return Response("md5 was not provided", status=400)
 
@@ -513,6 +534,7 @@ class ImageUploadView(APIView):
             for chunk in file_obj.chunks():
                 destination.write(chunk)
         return Response(status=204)
+
 
 def md5_for_file(chunks):
     md5 = hashlib.md5()

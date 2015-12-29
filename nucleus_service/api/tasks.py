@@ -3,9 +3,11 @@ from __future__ import absolute_import
 from celery import shared_task, Task
 from subprocess import Popen, PIPE, check_output, STDOUT, CalledProcessError
 import json
-import sys, traceback
+import sys
+import traceback
 
 ISOS_DIR = "/mnt/images"
+
 
 @shared_task(ignore_result=True)
 def submit_computeset(cset):
@@ -18,7 +20,7 @@ def submit_computeset(cset):
     import uuid
 
     cset["name"] = "VC-JOB-%s-%s" % (cset["id"],
-        str(uuid.uuid1()).replace('-',''))
+                                     str(uuid.uuid1()).replace('-', ''))
     cset["jobid"] = None
     cset["error"] = None
 
@@ -34,22 +36,22 @@ def submit_computeset(cset):
     # All other parameters should be considered UNCHANGABLE.
 
     cmd = ['/usr/bin/timeout',
-        '2',
-        '/usr/bin/sbatch',
-        '--job-name=%s' % (cset['name']),
-        '--output=%s.out' % (cset['name']),
-	    '--uid=%s' % (cset['user']),
-	    '--account=%s' % (cset['account']),
-        '--workdir=/tmp',
-        '--parsable',
-        '--partition=virt',
-        '--nodes=%s-%s' % (cset['node_count'], cset['node_count']),
-        '--ntasks-per-node=1',
-        '--cpus-per-task=24',
-        '--signal=B:USR1@60',
-        '--time=%s' % (cset['walltime_mins']),
-        '/etc/slurm/VC-JOB.run',
-        '%s' % (cset['walltime_mins'])]
+           '2',
+           '/usr/bin/sbatch',
+           '--job-name=%s' % (cset['name']),
+           '--output=%s.out' % (cset['name']),
+           '--uid=%s' % (cset['user']),
+           '--account=%s' % (cset['account']),
+           '--workdir=/tmp',
+           '--parsable',
+           '--partition=virt',
+           '--nodes=%s-%s' % (cset['node_count'], cset['node_count']),
+           '--ntasks-per-node=1',
+           '--cpus-per-task=24',
+           '--signal=B:USR1@60',
+           '--time=%s' % (cset['walltime_mins']),
+           '/etc/slurm/VC-JOB.run',
+           '%s' % (cset['walltime_mins'])]
 
     try:
         output = check_output(cmd, stderr=STDOUT)
@@ -66,11 +68,13 @@ def submit_computeset(cset):
     except CalledProcessError as e:
         cset["state"] = "failed"
         if e.returncode == 124:
-            msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
+            msg = "CalledProcessError: Timeout during request: %s" % (
+                e.output.strip().rstrip())
         else:
             msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
         print msg
+
 
 @shared_task(ignore_result=True)
 def cancel_computeset(cset):
@@ -82,12 +86,12 @@ def cancel_computeset(cset):
     from api.tasks import update_computeset
 
     cmd = ['/usr/bin/timeout',
-        '2',
-        '/usr/bin/scancel',
-        '--batch',
-        '--quiet',
-        '--signal=USR1',
-        '%s' % (cset['jobid'])]
+           '2',
+           '/usr/bin/scancel',
+           '--batch',
+           '--quiet',
+           '--signal=USR1',
+           '%s' % (cset['jobid'])]
 
     try:
         output = check_output(cmd, stderr=STDOUT)
@@ -102,10 +106,12 @@ def cancel_computeset(cset):
     except CalledProcessError as e:
         cset["state"] = "failed"
         if e.returncode == 124:
-            msg = "CalledProcessError: Timeout during request: %s" % (e.output.strip().rstrip())
+            msg = "CalledProcessError: Timeout during request: %s" % (
+                e.output.strip().rstrip())
         else:
             msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
+
 
 @shared_task(ignore_result=True)
 def update_computeset(cset_json):
@@ -135,7 +141,7 @@ def update_computeset(cset_json):
 
         cset.save()
 
-	    #The following will only exist after jobscript barrier...
+        # The following will only exist after jobscript barrier...
         if ("nodelist" in cset_json):
             cset.nodelist = cset_json["nodelist"]
             cset.save()
@@ -151,7 +157,7 @@ def update_computeset(cset_json):
             if (
                 old_cset_state == ComputeSet.CSET_STATE_SUBMITTED and
                 cset.state == ComputeSet.CSET_STATE_RUNNING
-                ):
+            ):
                 if cset.nodelist is not None:
                     cset = ComputeSet.objects.get(pk=cset.id)
                     nodes = []
@@ -166,7 +172,7 @@ def update_computeset(cset_json):
             if (
                 old_cset_state == ComputeSet.CSET_STATE_SUBMITTED and
                 cset.state == ComputeSet.CSET_STATE_COMPLETED
-                ):
+            ):
                 if cset.nodelist is not None:
                     hosts = hostlist.expand_hostlist("%s" % cset.nodelist)
                     # TODO: anything else todo?
@@ -175,7 +181,7 @@ def update_computeset(cset_json):
             if (
                 old_cset_state == ComputeSet.CSET_STATE_RUNNING and
                 cset.state == ComputeSet.CSET_STATE_ENDING
-                ):
+            ):
                 if cset.nodelist is not None:
                     nodes = []
                     for compute in cset.computes.all():
@@ -188,7 +194,7 @@ def update_computeset(cset_json):
             if (
                 old_cset_state == ComputeSet.CSET_STATE_RUNNING and
                 cset.state == ComputeSet.CSET_STATE_CANCELLED
-                ):
+            ):
                 if cset.nodelist is not None:
                     nodes = [compute['name'] for compute in cset.computes]
                     poweroff_nodes.delay(nodes, "shutdown")
@@ -196,7 +202,9 @@ def update_computeset(cset_json):
 
     except ComputeSet.DoesNotExist:
         cset = None
-        msg = "update_computeset: %s" % ("ComputeSet (%d) does not exist" % (cset_json["id"]))
+        msg = "update_computeset: %s" % (
+            "ComputeSet (%d) does not exist" % (cset_json["id"]))
+
 
 @shared_task(ignore_result=True)
 def poweron_nodeset(nodes, hosts, iso_name):
@@ -208,7 +216,8 @@ def poweron_nodeset(nodes, hosts, iso_name):
 
     if(hosts):
         for node, host in zip(nodes, hosts):
-            res = Popen(["/opt/rocks/bin/rocks", "set", "host", "vm", "%s"%node, "physnode=%s"%host], stdout=PIPE, stderr=PIPE)
+            res = Popen(["/opt/rocks/bin/rocks", "set", "host", "vm", "%s" %
+                         node, "physnode=%s" % host], stdout=PIPE, stderr=PIPE)
             out, err = res.communicate()
             outb += out
             errb += err
@@ -218,13 +227,13 @@ def poweron_nodeset(nodes, hosts, iso_name):
         if(ret_code):
             outb += out
             errb += err
-            return "Error adding iso to nodes: %s\n%s"%(outb, errb)
+            return "Error adding iso to nodes: %s\n%s" % (outb, errb)
 
     (ret_code, out, err) = _poweron_nodes(nodes)
     if (ret_code):
         outb += out
         errb += err
-        return "Error powering on nodes: %s\n%s"%(outb, errb)
+        return "Error powering on nodes: %s\n%s" % (outb, errb)
 
 
 @shared_task(ignore_result=True)
@@ -234,10 +243,12 @@ def poweroff_nodes(nodes, action):
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
+
+
 def _poweroff_nodes(nodes, action):
     args = ["/opt/rocks/bin/rocks", "stop", "host", "vm"]
     args.extend(nodes)
-    args.append("action=%s"%action)
+    args.append("action=%s" % action)
     res = Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = res.communicate()
     return (res.returncode, out, err)
@@ -247,14 +258,16 @@ def _poweroff_nodes(nodes, action):
 def attach_iso(nodes, iso_name):
     (ret_code, out, err) = _attach_iso(nodes, iso_name)
     if(ret_code):
-        return "%s\n%s"%(out, err)
+        return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
+
+
 def _attach_iso(nodes, iso_name):
     args = ["/opt/rocks/bin/rocks", "set", "host", "vm", "cdrom"]
     args.extend(nodes)
     if(iso_name):
-        args.append("cdrom=%s/%s"%(ISOS_DIR, iso_name))
+        args.append("cdrom=%s/%s" % (ISOS_DIR, iso_name))
     else:
         args.append("cdrom=none")
     res = Popen(args, stdout=PIPE, stderr=PIPE)
@@ -269,6 +282,8 @@ def poweron_nodes(nodes):
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
+
+
 def _poweron_nodes(nodes):
     args = ["/opt/rocks/bin/rocks", "start", "host", "vm"]
     args.extend(nodes)
@@ -282,13 +297,15 @@ def update_clusters(clusters_json):
     from api.models import Cluster, Frontend, Compute, ComputeSet, FrontendInterface, ComputeInterface
     for cluster_rocks in clusters_json:
         try:
-            cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
+            cluster_obj = Cluster.objects.get(
+                frontend__rocks_name=cluster_rocks["frontend"])
 
             if(cluster_obj.vlan != cluster_rocks["vlan"]):
                 cluster_obj.vlan = cluster_rocks["vlan"]
                 cluster_obj.save()
 
-            frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
+            frontend = Frontend.objects.get(
+                rocks_name=cluster_rocks["frontend"])
             if(frontend.state != cluster_rocks["state"] or frontend.memory != cluster_rocks["mem"] or frontend.cpus != cluster_rocks["cpus"]):
                 frontend.state = cluster_rocks["state"]
                 frontend.memory = cluster_rocks["mem"]
@@ -310,14 +327,17 @@ def update_clusters(clusters_json):
             cluster_obj.frontend = frontend
             cluster_obj.save()
 
-        cluster_obj = Cluster.objects.get(frontend__rocks_name=cluster_rocks["frontend"])
-        frontend = Frontend.objects.get(rocks_name = cluster_rocks["frontend"])
+        cluster_obj = Cluster.objects.get(
+            frontend__rocks_name=cluster_rocks["frontend"])
+        frontend = Frontend.objects.get(rocks_name=cluster_rocks["frontend"])
         for interface in cluster_rocks['interfaces']:
             if(interface["mac"]):
-                if_obj, created = FrontendInterface.objects.update_or_create(frontend = frontend, ip = interface["ip"], netmask = interface["netmask"], mac = interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
+                if_obj, created = FrontendInterface.objects.update_or_create(frontend=frontend, ip=interface["ip"], netmask=interface[
+                                                                             "netmask"], mac=interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
 
         for compute_rocks in cluster_rocks["computes"]:
-            compute_obj, created = Compute.objects.get_or_create(rocks_name = compute_rocks["name"], cluster = cluster_obj)
+            compute_obj, created = Compute.objects.get_or_create(
+                rocks_name=compute_rocks["name"], cluster=cluster_obj)
             if(created):
                 compute_obj.name = compute_rocks["name"]
                 compute_obj.state = compute_rocks["state"]
@@ -332,15 +352,16 @@ def update_clusters(clusters_json):
                 compute_obj.save()
                 try:
                     cset = ComputeSet.objects.get(computes__id__exact=compute_obj.id,
-                            state__in=[ComputeSet.CSET_STATE_RUNNING])
+                                                  state__in=[ComputeSet.CSET_STATE_RUNNING])
                     if (cset.state == ComputeSet.CSET_STATE_RUNNING
-                        and not cset.computes.filter(state="active")):
+                            and not cset.computes.filter(state="active")):
                         cancel_computeset.delay(cset)
                 except ComputeSet.DoesNotExist:
-                    print "Computeset for compute %s not found"%compute_obj.name
+                    print "Computeset for compute %s not found" % compute_obj.name
                 except:
                     print traceback.format_exc()
 
             for interface in compute_rocks['interfaces']:
                 if(interface["mac"]):
-                    if_obj, created = ComputeInterface.objects.update_or_create(compute = compute_obj, ip = interface["ip"], netmask = interface["netmask"], mac = interface["mac"], iface=interface["iface"], subnet=interface["subnet"])
+                    if_obj, created = ComputeInterface.objects.update_or_create(compute=compute_obj, ip=interface["ip"], netmask=interface[
+                                                                                "netmask"], mac=interface["mac"], iface=interface["iface"], subnet=interface["subnet"])

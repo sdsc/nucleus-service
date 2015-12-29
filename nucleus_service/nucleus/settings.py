@@ -46,7 +46,7 @@ INSTALLED_APPS = (
     'api',
     'rest_framework_swagger',
     'rest_auth'
-    )
+)
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -114,42 +114,42 @@ STATIC_ROOT = '/var/www/html/static'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-       'rest_framework.authentication.BasicAuthentication',
-       'rest_framework.authentication.SessionAuthentication',
-       'rest_framework.authentication.TokenAuthentication',
-       'api.auth.NucleusAPISignatureAuthentication'
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'api.auth.NucleusAPISignatureAuthentication'
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-       'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     )
 }
 
 CELERY_ROUTES = (
-                    {'api.tasks.submit_computeset':
-                        {'routing_key': 'comet-fe1'}
-                    },
-                    {'api.tasks.cancel_computeset':
-                        {'routing_key': 'comet-fe1'}
-                    },
-                    {'api.tasks.poweron_nodeset':
-                        {'routing_key': 'comet-fe1'}
-                    },
-                    {'api.tasks.poweron_nodes':
-                        {'routing_key': 'comet-fe1'}
-                    },
-                    {'api.tasks.poweroff_nodes':
-                        {'routing_key': 'comet-fe1'}
-                    },
-                    {'api.tasks.attach_iso':
-                        {'routing_key': 'comet-fe1'}
-                    },
-                    {'api.tasks.update_computeset':
-                        {'routing_key': 'update'}
-                    },
-                    {'api.tasks.update_clusters':
-                        {'routing_key': 'update'}
-                    }
-                 )
+    {'api.tasks.submit_computeset':
+     {'routing_key': 'comet-fe1'}
+     },
+    {'api.tasks.cancel_computeset':
+     {'routing_key': 'comet-fe1'}
+     },
+    {'api.tasks.poweron_nodeset':
+     {'routing_key': 'comet-fe1'}
+     },
+    {'api.tasks.poweron_nodes':
+     {'routing_key': 'comet-fe1'}
+     },
+    {'api.tasks.poweroff_nodes':
+     {'routing_key': 'comet-fe1'}
+     },
+    {'api.tasks.attach_iso':
+     {'routing_key': 'comet-fe1'}
+     },
+    {'api.tasks.update_computeset':
+     {'routing_key': 'update'}
+     },
+    {'api.tasks.update_clusters':
+     {'routing_key': 'update'}
+     }
+)
 
 CELERY_QUEUES = {
     'comet-fe1': {
@@ -162,6 +162,6 @@ CELERY_QUEUES = {
 
 
 SWAGGER_SETTINGS = {
-    "api_version": '1.0', # API's version
-    "api_path": "/nucleus" # the path to API (it could not be a root level)
+    "api_version": '1.0',  # API's version
+    "api_path": "/nucleus"  # the path to API (it could not be a root level)
 }
