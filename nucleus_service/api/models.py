@@ -1,9 +1,5 @@
-import subprocess
-
 import django.contrib.auth.models
-from django.contrib.auth import get_user_model, authenticate
 from django.db import models
-from rest_framework import serializers
 
 # #################################################
 #  FRONTEND
