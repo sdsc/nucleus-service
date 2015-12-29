@@ -1,9 +1,8 @@
-from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model
 import django.contrib.auth.models
-from django.conf import settings
+from rest_framework import serializers
 
-from models import *
+from models import Cluster, Frontend, FrontendInterface, Compute, ComputeInterface, ComputeSet
 
 # #################################################
 #  USER

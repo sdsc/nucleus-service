@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
-from subprocess import Popen, PIPE
 import json
-import sys
+from subprocess import Popen, PIPE
 import traceback
-from api.tasks import update_clusters
 
 from nucleus.celery import *
+
+from api.tasks import update_clusters
 
 clusters_req = Popen(['/opt/rocks/bin/rocks', 'list', 'cluster',
                       'json=true', 'status=true'], stdout=PIPE, stderr=PIPE)

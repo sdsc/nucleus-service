@@ -1,5 +1,6 @@
-from django.conf.urls import patterns, include, url
 import views
+
+from django.conf.urls import patterns, include, url
 from rest_framework.routers import Route, DynamicDetailRoute
 from rest_framework_nested.routers import SimpleRouter, NestedSimpleRouter
 

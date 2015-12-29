@@ -1,12 +1,11 @@
-from rest_framework_httpsignature.authentication import SignatureAuthentication
-from django.contrib.auth.models import User
-from api.models import Nonce
-from rest_framework import exceptions
-
 import time
-
 import traceback
 
+from django.contrib.auth.models import User
+from rest_framework_httpsignature.authentication import SignatureAuthentication
+from rest_framework import exceptions
+
+from api.models import Nonce
 
 class NucleusAPISignatureAuthentication(SignatureAuthentication):
     # The HTTP header used to pass the consumer key ID.

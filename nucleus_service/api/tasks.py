@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 
-from celery import shared_task, Task
 from subprocess import Popen, PIPE, check_output, STDOUT, CalledProcessError
-import json
-import sys
 import traceback
+
+from celery import shared_task
 
 ISOS_DIR = "/mnt/images"
 

@@ -1,3 +1,7 @@
+import hashlib
+import json
+import subprocess
+
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -5,8 +9,6 @@ from rest_framework.views import APIView
 from django.views.generic import DetailView, ListView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.decorators import detail_route
-from models import *
-from serializers import *
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -17,26 +19,18 @@ from rest_framework.parsers import FileUploadParser
 
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView, RetrieveAPIView, RetrieveUpdateDestroyAPIView
 
-import subprocess
-
-from django.shortcuts import get_object_or_404
-
-from api.tasks import poweron_nodeset, poweron_nodes, poweroff_nodes, submit_computeset, cancel_computeset, attach_iso
-import random
-
-from functools import wraps
-
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-import time
-import json
-import hostlist
-import os
-import sys
-import hashlib
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+
+from tasks import poweron_nodes, poweroff_nodes
+from tasks import submit_computeset, cancel_computeset, attach_iso
+import hostlist
+from models import Cluster, Compute, ComputeSet
+from serializers import ComputeSerializer, ComputeSetSerializer, FullComputeSetSerializer
+from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer, UserDetailsSerializer
 
 # #################################################
 #  CLUSTER
