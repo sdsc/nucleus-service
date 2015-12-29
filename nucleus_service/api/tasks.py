@@ -151,10 +151,8 @@ def update_computeset(cset_json):
                 cset.save()
 
             # Job passed from SUBMITTED to RUNNING state...
-            if (
-                old_cset_state == ComputeSet.CSET_STATE_SUBMITTED and
-                cset.state == ComputeSet.CSET_STATE_RUNNING
-            ):
+            if (old_cset_state == ComputeSet.CSET_STATE_SUBMITTED
+                and cset.state == ComputeSet.CSET_STATE_RUNNING):
                 if cset.nodelist is not None:
                     cset = ComputeSet.objects.get(pk=cset.id)
                     nodes = []
@@ -166,19 +164,15 @@ def update_computeset(cset_json):
                     poweron_nodeset.delay(nodes, hosts, None)
 
             # Job passed from SUBMITTED to COMPLETED state directly...
-            if (
-                old_cset_state == ComputeSet.CSET_STATE_SUBMITTED and
-                cset.state == ComputeSet.CSET_STATE_COMPLETED
-            ):
+            if (old_cset_state == ComputeSet.CSET_STATE_SUBMITTED
+                and cset.state == ComputeSet.CSET_STATE_COMPLETED):
                 if cset.nodelist is not None:
                     hosts = hostlist.expand_hostlist("%s" % cset.nodelist)
                     # TODO: anything else todo?
 
             # Job passed from RUNNING to ENDING state...
-            if (
-                old_cset_state == ComputeSet.CSET_STATE_RUNNING and
-                cset.state == ComputeSet.CSET_STATE_ENDING
-            ):
+            if (old_cset_state == ComputeSet.CSET_STATE_RUNNING
+                and cset.state == ComputeSet.CSET_STATE_ENDING):
                 if cset.nodelist is not None:
                     nodes = []
                     for compute in cset.computes.all():
@@ -188,10 +182,8 @@ def update_computeset(cset_json):
                     # TODO: vlan & switchport de-configuration
 
             # Job passed from RUNNING to CANCELLED state...
-            if (
-                old_cset_state == ComputeSet.CSET_STATE_RUNNING and
-                cset.state == ComputeSet.CSET_STATE_CANCELLED
-            ):
+            if (old_cset_state == ComputeSet.CSET_STATE_RUNNING
+                and cset.state == ComputeSet.CSET_STATE_CANCELLED):
                 if cset.nodelist is not None:
                     nodes = [compute['name'] for compute in cset.computes]
                     poweroff_nodes.delay(nodes, "shutdown")
@@ -344,7 +336,9 @@ def update_clusters(clusters_json):
                 compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.type = compute_rocks["type"]
                 compute_obj.save()
-            elif(compute_obj.state != compute_rocks["state"] or compute_obj.memory != compute_rocks["mem"] or compute_obj.cpus != compute_rocks["cpus"]):
+            elif(compute_obj.state != compute_rocks["state"]
+                or compute_obj.memory != compute_rocks["mem"]
+                or compute_obj.cpus != compute_rocks["cpus"]):
                 compute_obj.state = compute_rocks["state"]
                 compute_obj.memory = compute_rocks["mem"]
                 compute_obj.cpus = compute_rocks["cpus"]
