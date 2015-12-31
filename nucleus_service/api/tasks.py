@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 from subprocess import Popen, PIPE, check_output, STDOUT, CalledProcessError
 import traceback
+import syslog
 
 from celery import shared_task
+syslog.openlog('nucleus-service', syslog.LOG_PID, syslog.LOG_USER)
 
 ISOS_DIR = "/mnt/images"
 
@@ -18,6 +20,7 @@ def submit_computeset(cset):
     from api.tasks import update_computeset
     import uuid
 
+    syslog.syslog(syslog.LOG_DEBUG, "submit_computeset() running")
     cset["name"] = "VC-JOB-%s-%s" % (cset["id"],
                                      str(uuid.uuid1()).replace('-', ''))
     cset["jobid"] = None
@@ -57,12 +60,13 @@ def submit_computeset(cset):
         cset["jobid"] = output.rstrip().strip()
         cset["state"] = "submitted"
         update_computeset.delay(cset)
+        syslog.syslog(syslog.LOG_INFO, "Submitting computeset job %s" % cset['name'])
 
     except OSError as e:
         cset["state"] = "failed"
         msg = "OSError: %s" % (e)
         update_computeset.delay(cset)
-        print msg
+        syslog.syslog(syslog.LOG_ERR, msg)
 
     except CalledProcessError as e:
         cset["state"] = "failed"
@@ -72,7 +76,7 @@ def submit_computeset(cset):
         else:
             msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
-        print msg
+        syslog.syslog(syslog.LOG_ERR, msg)
 
 
 @shared_task(ignore_result=True)
@@ -83,6 +87,7 @@ def cancel_computeset(cset):
         Actual poweroff of the nodes is handled by the jobscript and/or epilog.
     """
     from api.tasks import update_computeset
+    syslog.syslog(syslog.LOG_DEBUG, "cancel_computeset() running")
 
     cmd = ['/usr/bin/timeout',
            '2',
@@ -96,11 +101,13 @@ def cancel_computeset(cset):
         output = check_output(cmd, stderr=STDOUT)
         cset["state"] = "cancelled"
         update_computeset.delay(cset)
+        syslog.syslog(syslog.LOG_INFO, "Cancelling computeset job %s" % cset['name'])
 
     except OSError as e:
         cset["state"] = "failed"
         msg = "OSError: %s" % (e)
         update_computeset.delay(cset)
+        syslog.syslog(syslog.LOG_ERR, msg)
 
     except CalledProcessError as e:
         cset["state"] = "failed"
@@ -110,6 +117,7 @@ def cancel_computeset(cset):
         else:
             msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
+        syslog.syslog(syslog.LOG_ERR, msg)
 
 
 @shared_task(ignore_result=True)
@@ -117,6 +125,7 @@ def update_computeset(cset_json):
     """ This task runs on comet-nucleus and can update the database """
     from api.models import ComputeSet
     from api import hostlist
+    syslog.syslog(syslog.LOG_DEBUG, "update_computeset() running")
 
     try:
         cset = ComputeSet.objects.get(id=cset_json['id'])
@@ -203,12 +212,15 @@ def update_computeset(cset_json):
         cset = None
         msg = "update_computeset: %s" % (
             "ComputeSet (%d) does not exist" % (cset_json["id"]))
+        syslog.syslog(syslog.LOG_ERR, msg)
 
 
 @shared_task(ignore_result=True)
 def poweron_nodeset(nodes, hosts, iso_name):
+    syslog.syslog(syslog.LOG_DEBUG, "poweron_nodeset() running")
     if(hosts and (len(nodes) != len(hosts))):
-        print "hosts length is not equal to nodes"
+        err ="poweron_nodest(): hosts length is not equal to nodes length"
+        syslog.syslog(syslog.LOG_ERR, err)
         return
     outb = ""
     errb = ""
@@ -237,8 +249,10 @@ def poweron_nodeset(nodes, hosts, iso_name):
 
 @shared_task(ignore_result=True)
 def poweroff_nodes(nodes, action):
+    syslog.syslog(syslog.LOG_DEBUG, "poweroff_nodes() running")
     (ret_code, out, err) = _poweroff_nodes(nodes, action)
     if (ret_code):
+        syslog.syslog(syslog.LOG_ERR, err)
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
@@ -255,8 +269,10 @@ def _poweroff_nodes(nodes, action):
 
 @shared_task(ignore_result=True)
 def attach_iso(nodes, iso_name):
+    syslog.syslog(syslog.LOG_DEBUG, "attach_iso() running")
     (ret_code, out, err) = _attach_iso(nodes, iso_name)
     if(ret_code):
+        syslog.syslog(syslog.LOG_ERR, err)
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
@@ -276,8 +292,10 @@ def _attach_iso(nodes, iso_name):
 
 @shared_task(ignore_result=True)
 def poweron_nodes(nodes):
+    syslog.syslog(syslog.LOG_DEBUG, "poweron_nodes() running")
     (ret_code, out, err) = _poweron_nodes(nodes)
     if (ret_code):
+        syslog.syslog(syslog.LOG_ERR, err)
         return "%s\n%s" % (out, err)
 
 # Local function to be called from multiple tasks
@@ -294,6 +312,7 @@ def _poweron_nodes(nodes):
 @shared_task(ignore_result=True)
 def update_clusters(clusters_json):
     from api.models import Cluster, Frontend, Compute, ComputeSet, FrontendInterface, ComputeInterface
+    syslog.syslog(syslog.LOG_DEBUG, "update_clusters() running")
     for cluster_rocks in clusters_json:
         try:
             cluster_obj = Cluster.objects.get(
