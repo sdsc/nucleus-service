@@ -1,18 +1,15 @@
-from django.db import models
-from rest_framework import serializers
 import django.contrib.auth.models
-from django.contrib.auth import get_user_model, authenticate
-
-import subprocess
+from django.db import models
 
 # #################################################
 #  FRONTEND
 # #################################################
 
+
 class Frontend(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=100)
-    rocks_name =  models.CharField(max_length=100, unique=True)
+    rocks_name = models.CharField(max_length=100, unique=True)
     cpus = models.IntegerField(null=True)
     memory = models.IntegerField(null=True)
     state = models.CharField(max_length=64, null=True)
@@ -21,13 +18,15 @@ class Frontend(models.Model):
     class Meta:
         managed = True
 
+
 class FrontendInterface(models.Model):
-    ip = models.GenericIPAddressField(default='0.0.0.0',null=True)
-    netmask = models.GenericIPAddressField(default='0.0.0.0',null=True)
-    mac = models.CharField(max_length=17,default='', unique=True)
-    iface = models.CharField(max_length=64,default='')
+    ip = models.GenericIPAddressField(default='0.0.0.0', null=True)
+    netmask = models.GenericIPAddressField(default='0.0.0.0', null=True)
+    mac = models.CharField(max_length=17, default='', unique=True)
+    iface = models.CharField(max_length=64, default='')
     subnet = models.CharField(max_length=64, null=True)
     frontend = models.ForeignKey(Frontend, related_name='interface')
+
     class Meta:
         managed = True
 
@@ -35,10 +34,11 @@ class FrontendInterface(models.Model):
 #  CLUSTER
 # #################################################
 
+
 class Cluster(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.TextField(default="")
-    project = models.ForeignKey(django.contrib.auth.models.Group, null = True)
+    project = models.ForeignKey(django.contrib.auth.models.Group, null=True)
     frontend = models.ForeignKey(Frontend, related_name='cluster')
     vlan = models.IntegerField(null=True)
 
@@ -48,6 +48,7 @@ class Cluster(models.Model):
 # #################################################
 #  COMPUTE
 # #################################################
+
 
 class Compute(models.Model):
     name = models.CharField(max_length=128)
@@ -62,13 +63,15 @@ class Compute(models.Model):
     class Meta:
         managed = True
 
+
 class ComputeInterface(models.Model):
-    ip = models.GenericIPAddressField(default='0.0.0.0',null=True)
-    netmask = models.GenericIPAddressField(default='0.0.0.0',null=True)
-    mac = models.CharField(max_length=17,default='', unique=True)
+    ip = models.GenericIPAddressField(default='0.0.0.0', null=True)
+    netmask = models.GenericIPAddressField(default='0.0.0.0', null=True)
+    mac = models.CharField(max_length=17, default='', unique=True)
     compute = models.ForeignKey(Compute, related_name='interface')
-    iface = models.CharField(max_length=64,default='')
+    iface = models.CharField(max_length=64, default='')
     subnet = models.CharField(max_length=64, null=True)
+
     class Meta:
         managed = True
 
@@ -76,9 +79,11 @@ class ComputeInterface(models.Model):
 #  NUCLEUSUSER
 # #################################################
 
+
 class NucleusUser(models.Model):
     key_name = models.CharField(max_length=128, primary_key=True)
-    user = models.OneToOneField(django.contrib.auth.models.User, related_name='api_key')
+    user = models.OneToOneField(
+        django.contrib.auth.models.User, related_name='api_key')
     secret = models.TextField()
 
     class Meta:
@@ -88,15 +93,18 @@ class NucleusUser(models.Model):
 #  NONCE
 # #################################################
 
+
 class Nonce(models.Model):
     nonce = models.CharField(max_length=128, primary_key=True)
     timestamp = models.IntegerField()
+
     class Meta:
         managed = True
 
 # #################################################
 #  COMPUTESET
 # #################################################
+
 
 class ComputeSet(models.Model):
     CSET_STATE_CREATED = 'created'
@@ -125,8 +133,8 @@ class ComputeSet(models.Model):
     nodelist = models.TextField(null=True)
     node_count = models.PositiveIntegerField(null=True)
     state = models.CharField(max_length=128,
-        choices=CSET_STATES,
-        default=CSET_STATE_CREATED)
+                             choices=CSET_STATES,
+                             default=CSET_STATE_CREATED)
 
     class Meta:
         managed = True
