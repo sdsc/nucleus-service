@@ -195,7 +195,7 @@ def update_computeset(cset_json):
             if (old_cset_state == ComputeSet.CSET_STATE_RUNNING
                 and cset.state == ComputeSet.CSET_STATE_CANCELLED):
                 if cset.nodelist is not None:
-                    nodes = [compute['rocks_name'] for compute in cset.computes.all()]
+                    nodes = [compute.rocks_name for compute in cset.computes.all()]
                     poweroff_nodes.delay(nodes, "shutdown")
                     # TODO: vlan & switchport de-configuration
 
