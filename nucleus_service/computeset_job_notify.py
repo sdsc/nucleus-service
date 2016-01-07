@@ -3,6 +3,8 @@
 import os
 from api.tasks import update_computeset
 
+from nucleus.celery import *
+
 request = {'stage': None, 'state': None, 'jobid': None, 'name': None, 'computeset': None}
 
 if os.environ.has_key('COMPUTESET_JOB_STAGE'):
