@@ -464,6 +464,20 @@ class FrontendViewSet(ViewSet):
         poweroff_nodes.delay([clust.frontend.rocks_name], "poweroff")
         return Response(status=204)
 
+    @detail_route(methods=['put'])
+    def attach_iso(self, request, frontend_cluster_name, format=None):
+        """Attach an ISO to the frontendresource in a named cluster.
+        """
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
+        if not clust.project in request.user.groups.all():
+            raise PermissionDenied()
+        poweron_nodes.delay([clust.frontend.rocks_name])
+        if not "iso_name" in request.GET:
+            return Response("Please provide the iso_name", status=400)
+        attach_iso.delay([clust.frontend.rocks_name], request.GET["iso_name"])
+        return Response(status=204)
+
+
 # #################################################
 #  USER
 # #################################################
