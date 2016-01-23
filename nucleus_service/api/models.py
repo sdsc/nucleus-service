@@ -41,9 +41,14 @@ class Cluster(models.Model):
     project = models.ForeignKey(django.contrib.auth.models.Group, null=True)
     frontend = models.ForeignKey(Frontend, related_name='cluster')
     vlan = models.IntegerField(null=True)
+    username = models.CharField(max_length=128, null=False) # username under which we run the VMs for the cluster
 
     class Meta:
         managed = True
+
+class Allocation(models.Model):
+    allocation = models.CharField(max_length=128, unique=True)
+    cluster = models.ManyToManyField(Cluster)
 
 # #################################################
 #  COMPUTE
