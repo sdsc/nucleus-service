@@ -85,18 +85,21 @@ for cluster in result:
                     next(compute for compute in cluster['computes'] if compute[
                          'name'] == rec['host'])['interfaces'].append(interface)
 
-        vm_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'vm',
-                        cluster['frontend'], 'json=true'], stdout=PIPE, stderr=PIPE)
+        args = ['/opt/rocks/bin/rocks', 'list', 'host', 'vm']
+        args.extend([compute['name'] for compute in cluster['computes']])
+        args.append('json=true')
+        vm_req = Popen(args, stdout=PIPE, stderr=PIPE)
         (out, err) = vm_req.communicate()
         if out:
-            for vm_rec in json.loads(out)[0]["vm"]:
-                if(vm_rec["mem"]):
-                    compute["mem"] = vm_rec["mem"]
-                    compute["cpus"] = vm_rec["cpus"]
+            for vm_rec in json.loads(out):
+                compute = next(compute for compute in cluster['computes'] if compute[
+                     'name'] == vm_rec['vm-host'])
+                compute["mem"] = vm_rec["vm"][0]["mem"]
+                compute["cpus"] = vm_rec["vm"][0]["cpus"]
 
     except:
         # print "Unexpected error:", traceback.print_tb(sys.exc_info()[2])
         traceback.print_exc()
 
 update_clusters.delay(result)
-# print(json.dumps(result))
+#print(json.dumps(result))
