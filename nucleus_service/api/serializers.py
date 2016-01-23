@@ -94,9 +94,10 @@ class ClusterSerializer(serializers.ModelSerializer):
     computes = ComputeSerializer(many=True, read_only=True)
     frontend = FrontendSerializer(read_only=True)
     project = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    allocations = serializers.SlugRelatedField(read_only=True, slug_field='allocation', many='True')
 
     class Meta:
         model = Cluster
         fields = ('name', 'description', 'computes',
-                  'frontend', 'project', 'vlan')
-        read_only_fields = ('computes', 'name', 'frontend', 'vlan')
+                  'frontend', 'project', 'vlan', 'allocations')
+        read_only_fields = ('computes', 'name', 'frontend', 'vlan', 'allocations')
