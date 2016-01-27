@@ -67,6 +67,9 @@ for cluster in result:
                     cluster["mem"] = vm_rec["mem"]
                     cluster["cpus"] = vm_rec["cpus"]
 
+        if(not cluster['computes']):
+            continue
+
         args = ['/opt/rocks/bin/rocks', 'list', 'host', 'interface']
         args.extend([compute['name'] for compute in cluster['computes']])
         args.append('json=true')
