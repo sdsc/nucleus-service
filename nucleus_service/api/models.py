@@ -22,7 +22,7 @@ class Frontend(models.Model):
 class FrontendInterface(models.Model):
     ip = models.GenericIPAddressField(default='0.0.0.0', null=True)
     netmask = models.GenericIPAddressField(default='0.0.0.0', null=True)
-    mac = models.CharField(max_length=17, default='', unique=True)
+    mac = models.CharField(max_length=60, default='', unique=True)
     iface = models.CharField(max_length=64, default='')
     subnet = models.CharField(max_length=64, null=True)
     frontend = models.ForeignKey(Frontend, related_name='interface')
@@ -72,7 +72,7 @@ class Compute(models.Model):
 class ComputeInterface(models.Model):
     ip = models.GenericIPAddressField(default='0.0.0.0', null=True)
     netmask = models.GenericIPAddressField(default='0.0.0.0', null=True)
-    mac = models.CharField(max_length=17, default='', unique=True)
+    mac = models.CharField(max_length=60, default='', unique=True)
     compute = models.ForeignKey(Compute, related_name='interface')
     iface = models.CharField(max_length=64, default='')
     subnet = models.CharField(max_length=64, null=True)

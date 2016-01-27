@@ -317,7 +317,8 @@ class ComputeSetViewSet(ModelViewSet):
 
         cset = ComputeSet()
         cset.cluster = clust
-        cset.user = self.request.user.username
+        cset.user = clust.username
+        #cset.user = self.request.user.username
         cset.account = clust.project
         cset.walltime_mins = walltime_mins
         cset.jobid = None
