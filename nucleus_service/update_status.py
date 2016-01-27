@@ -27,6 +27,7 @@ for record in clusters:
             'type': record['cluster'][0]['type'],
             'computes': []
         }
+        result.append(res_clust)
     else:
         res_clust['computes'] = [
             {
@@ -38,7 +39,6 @@ for record in clusters:
                 'state': client['status']
             } for client in record["cluster"]
         ]
-        result.append(res_clust)
 
 for cluster in result:
     try:
