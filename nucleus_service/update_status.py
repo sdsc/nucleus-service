@@ -23,6 +23,7 @@ for record in clusters:
             'interfaces': [],
             'mem': 0,
             'cpus': 0,
+            'disksize': 0,
             'state': record['cluster'][0]['status'],
             'type': record['cluster'][0]['type'],
             'computes': []
@@ -35,6 +36,7 @@ for record in clusters:
                 'interfaces': [],
                 'mem': 0,
                 'cpus': 0,
+                'disksize': 0,
                 'type': client['type'],
                 'state': client['status']
             } for client in record["cluster"]
@@ -59,13 +61,14 @@ for cluster in result:
                     cluster['vlan'] = if_rec['vlan']
 
         vm_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'vm',
-                        cluster['frontend'], 'json=true'], stdout=PIPE, stderr=PIPE)
+                        cluster['frontend'], 'json=true', 'showdisks=true'], stdout=PIPE, stderr=PIPE)
         (out, err) = vm_req.communicate()
         if out:
             for vm_rec in json.loads(out)[0]["vm"]:
                 if(vm_rec["mem"]):
                     cluster["mem"] = vm_rec["mem"]
                     cluster["cpus"] = vm_rec["cpus"]
+                    cluster["disksize"] = vm_rec["disksize"]
 
         if(not cluster['computes']):
             continue
@@ -99,6 +102,7 @@ for cluster in result:
                      'name'] == vm_rec['vm-host'])
                 compute["mem"] = vm_rec["vm"][0]["mem"]
                 compute["cpus"] = vm_rec["vm"][0]["cpus"]
+                compute["disksize"] = vm_rec["vm"][0]["disksize"]
 
     except:
         # print "Unexpected error:", traceback.print_tb(sys.exc_info()[2])
