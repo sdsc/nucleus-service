@@ -48,7 +48,7 @@ class Cluster(models.Model):
 
 class Allocation(models.Model):
     allocation = models.CharField(max_length=128, unique=True)
-    cluster = models.ManyToManyField(Cluster)
+    cluster = models.ManyToManyField(Cluster, related_name="allocations")
 
 # #################################################
 #  COMPUTE
