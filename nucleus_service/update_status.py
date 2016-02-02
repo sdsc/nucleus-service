@@ -93,7 +93,7 @@ for cluster in result:
 
         args = ['/opt/rocks/bin/rocks', 'list', 'host', 'vm']
         args.extend([compute['name'] for compute in cluster['computes']])
-        args.append('json=true')
+        args.extend(['json=true', 'showdisks=true'])
         vm_req = Popen(args, stdout=PIPE, stderr=PIPE)
         (out, err) = vm_req.communicate()
         if out:
