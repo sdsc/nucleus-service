@@ -12,6 +12,7 @@ class Frontend(models.Model):
     rocks_name = models.CharField(max_length=100, unique=True)
     cpus = models.IntegerField(null=True)
     memory = models.IntegerField(null=True)
+    disksize = models.IntegerField(null=True)
     state = models.CharField(max_length=64, null=True)
     type = models.CharField(max_length=16)
 
@@ -61,6 +62,7 @@ class Compute(models.Model):
     cluster = models.ForeignKey(Cluster, related_name='computes')
     host = models.CharField(max_length=128, null=True)
     cpus = models.IntegerField(null=True)
+    disksize = models.IntegerField(null=True)
     memory = models.IntegerField(null=True)
     state = models.CharField(max_length=64, null=True)
     type = models.CharField(max_length=16)

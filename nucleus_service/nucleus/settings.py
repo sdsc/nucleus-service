@@ -124,6 +124,8 @@ REST_FRAMEWORK = {
     )
 }
 
+CELERY_TASK_SERIALIZER = 'json'
+
 CELERY_ROUTES = (
     {'api.tasks.submit_computeset':
      {'routing_key': 'comet-fe1'}

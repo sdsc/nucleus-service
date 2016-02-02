@@ -317,9 +317,11 @@ def update_clusters(clusters_json):
                 rocks_name=cluster_rocks["frontend"])
             if(frontend.state != cluster_rocks["state"]
                 or frontend.memory != cluster_rocks["mem"]
+                or frontend.disksize != cluster_rocks["disksize"]
                 or frontend.cpus != cluster_rocks["cpus"]):
                 frontend.state = cluster_rocks["state"]
                 frontend.memory = cluster_rocks["mem"]
+                frontend.disksize = cluster_rocks["disksize"]
                 frontend.cpus = cluster_rocks["cpus"]
                 frontend.save()
         except Cluster.DoesNotExist:
@@ -328,6 +330,7 @@ def update_clusters(clusters_json):
             frontend.rocks_name = cluster_rocks["frontend"]
             frontend.state = cluster_rocks["state"]
             frontend.memory = cluster_rocks["mem"]
+            frontend.disksize = cluster_rocks["disksize"]
             frontend.cpus = cluster_rocks["cpus"]
             frontend.type = cluster_rocks["type"]
             frontend.save()
@@ -354,6 +357,7 @@ def update_clusters(clusters_json):
                 compute_obj.name = compute_rocks["name"]
                 compute_obj.state = compute_rocks["state"]
                 compute_obj.memory = compute_rocks["mem"]
+                compute_obj.disksize = compute_rocks["disksize"]
                 compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.type = compute_rocks["type"]
                 compute_obj.save()
@@ -362,6 +366,7 @@ def update_clusters(clusters_json):
                 or compute_obj.cpus != compute_rocks["cpus"]):
                 compute_obj.state = compute_rocks["state"]
                 compute_obj.memory = compute_rocks["mem"]
+                compute_obj.disksize = compute_rocks["disksize"]
                 compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.save()
                 try:
