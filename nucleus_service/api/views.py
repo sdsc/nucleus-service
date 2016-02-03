@@ -318,8 +318,17 @@ class ComputeSetViewSet(ModelViewSet):
         cset = ComputeSet()
         cset.cluster = clust
         cset.user = clust.username
-        #cset.user = self.request.user.username
-        cset.account = clust.project
+        if(request.data.get("allocation")):
+            cset.account = request.data["allocation"]
+        elif(clust.allocations.count() == 1):
+            cset.account = clust.allocations.get().allocation
+        else:
+            return Response("Please specify the allocation",
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        if(not clust.allocations.filter(allocation=cset.account).exists()):
+            return Response("Allocation %s does not belong to the cluster."%cset.account,
+                    status=status.HTTP_400_BAD_REQUEST)
         cset.walltime_mins = walltime_mins
         cset.jobid = None
         cset.name = None
