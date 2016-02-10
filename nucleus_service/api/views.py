@@ -22,6 +22,8 @@ from serializers import ComputeSerializer, ComputeSetSerializer, FullComputeSetS
 from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer
 from serializers import UserDetailsSerializer
 
+import re
+
 # #################################################
 #  CLUSTER
 # #################################################
@@ -138,6 +140,23 @@ class ComputeViewSet(ViewSet):
         if not "iso_name" in request.GET:
             return Response("Please provide the iso_name", status=400)
         attach_iso.delay([compute.rocks_name], request.GET["iso_name"])
+        return Response(status=204)
+
+    @detail_route(methods=['post'])
+    def rename(self, request, compute_name_cluster_name, compute_name, format=None):
+        """Rename the named compute resource in a named cluster.
+        """
+        compute = get_object_or_404(
+            Compute, name=compute_name, cluster__name=compute_name_cluster_name)
+        if not compute.cluster.project in request.user.groups.all():
+            raise PermissionDenied()
+        new_name = request.data.get("name")
+        if(not re.match('^[a-zA-Z0-9_-]+$',new_name)):
+            return Response("New name can opnly contain alphanumeric symbols, digits and '-_'.",
+                            status=status.HTTP_400_BAD_REQUEST)
+            
+        compute.name = new_name
+        compute.save()
         return Response(status=204)
 
 
