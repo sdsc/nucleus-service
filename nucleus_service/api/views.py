@@ -341,14 +341,21 @@ class ComputeSetViewSet(ModelViewSet):
         nodes = []
         hosts = []
 
-        if request.data["computes"] is list:
-            for obj in request.data["computes"]:
-                nodes.append(obj["name"])
-                hosts.append(obj["host"])
-        else:
-            nodes = hostlist.expand_hostlist("%s" % request.data["computes"])
-            if request.data.get("hosts"):
-                hosts = hostlist.expand_hostlist("%s" % request.data["hosts"])
+        if request.data.get("computes"):
+            if request.data["computes"] is list:
+                for obj in request.data["computes"]:
+                    nodes.append(obj["name"])
+                    hosts.append(obj["host"])
+            else:
+                nodes = hostlist.expand_hostlist("%s" % request.data["computes"])
+                if request.data.get("hosts"):
+                    hosts = hostlist.expand_hostlist("%s" % request.data["hosts"])
+        elif request.data.get("count"):
+            computes_selected = Compute.objects.filter(cluster=clust).exclude(state="active")[:int(request.data["count"])]
+            nodes.extend([comp.name for comp in computes_selected])
+            if(len(nodes) < int(request.data["count"]) or int(request.data["count"]) == 0):
+                return Response("There are %i nodes available for starting. Requested number should be greater than zero."%len(nodes),
+                                status=status.HTTP_400_BAD_REQUEST)
 
         if hosts and len(nodes) != len(hosts):
             return Response("The length of hosts should be equal to length of nodes",
