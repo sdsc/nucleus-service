@@ -82,6 +82,10 @@ class ComputeViewSet(ViewSet):
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all:
             raise PermissionDenied()
+        if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
+            return Response("Compute is not a member of an active computeset",
+                            status=status.HTTP_400_BAD_REQUEST)
+            
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
         return Response(status=204)
 
@@ -93,6 +97,10 @@ class ComputeViewSet(ViewSet):
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
+        if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
+            return Response("Compute is not a member of an active computeset",
+                            status=status.HTTP_400_BAD_REQUEST)
+            
         poweroff_nodes.delay([compute.rocks_name], "reboot")
         return Response(status=204)
 
@@ -104,6 +112,10 @@ class ComputeViewSet(ViewSet):
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
+        if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
+            return Response("Compute is not a member of an active computeset",
+                            status=status.HTTP_400_BAD_REQUEST)
+            
         poweroff_nodes.delay([compute.rocks_name], "reset")
         return Response(status=204)
 
@@ -115,6 +127,10 @@ class ComputeViewSet(ViewSet):
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
+        if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
+            return Response("Compute is not a member of an active computeset",
+                            status=status.HTTP_400_BAD_REQUEST)
+            
         poweroff_nodes.delay([compute.rocks_name], "poweroff")
         return Response(status=204)
 
@@ -126,6 +142,10 @@ class ComputeViewSet(ViewSet):
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
+        if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
+            return Response("Compute is not a member of an active computeset",
+                            status=status.HTTP_400_BAD_REQUEST)
+            
         poweron_nodes.delay([compute.rocks_name])
         return Response(status=204)
 
@@ -252,7 +272,7 @@ class ConsoleViewSet(ViewSet):
             Compute, name=console_compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(console_compute_name)
+        return get_console(compute.rocks_name)
 
 
 class FrontendConsoleViewSet(ViewSet):

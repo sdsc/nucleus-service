@@ -130,7 +130,7 @@ class ComputeSet(models.Model):
         (CSET_STATE_ENDING, 'Ending'),
         (CSET_STATE_COMPLETED, 'Completed'),
     )
-    computes = models.ManyToManyField(Compute)
+    computes = models.ManyToManyField(Compute, related_name='computeset')
     cluster = models.ForeignKey(Cluster)
     jobid = models.PositiveIntegerField(unique=True, null=True)
     name = models.CharField(max_length=64, unique=True, null=True)
