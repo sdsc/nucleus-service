@@ -351,7 +351,13 @@ class ComputeSetViewSet(ModelViewSet):
                 if request.data.get("hosts"):
                     hosts = hostlist.expand_hostlist("%s" % request.data["hosts"])
         elif request.data.get("count"):
-            computes_selected = Compute.objects.filter(cluster=clust).exclude(state="active")[:int(request.data["count"])]
+            computes_selected = Compute.objects.filter(cluster=clust).exclude(
+                    computeset__state__in=[
+                        ComputeSet.CSET_STATE_CREATED, 
+                        ComputeSet.CSET_STATE_SUBMITTED, 
+                        ComputeSet.CSET_STATE_RUNNING, 
+                        ComputeSet.CSET_STATE_ENDING]
+                ).exclude(state="active")[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
             if(len(nodes) < int(request.data["count"]) or int(request.data["count"]) == 0):
                 return Response("There are %i nodes available for starting. Requested number should be greater than zero."%len(nodes),
