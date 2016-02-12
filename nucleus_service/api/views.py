@@ -22,7 +22,7 @@ from serializers import ComputeSerializer, ComputeSetSerializer, FullComputeSetS
 from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer
 from serializers import UserDetailsSerializer
 
-import re
+import re, os
 
 # #################################################
 #  CLUSTER
@@ -578,8 +578,12 @@ class ProjectListView(ListAPIView):
 class ImageUploadView(APIView):
     parser_classes = (FileUploadParser,)
 
+    def get(self, request, format=None):
+        filepath = '/mnt/images/public'
+        return Response(["public/%s"%dir for dir in os.listdir(filepath)])
+
     def post(self, request, format=None):
-        groups = request.user.groups.all()
+        #groups = request.user.groups.all()
         file_obj = request.FILES['file']
         #filepath = '/mnt/images/%s/%s'%(groups[0].name, file_obj.name)
         filepath = '/mnt/images/public/%s' % (file_obj.name)
