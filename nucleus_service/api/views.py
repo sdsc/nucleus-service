@@ -80,7 +80,7 @@ class ComputeViewSet(ViewSet):
         """
         compute = get_object_or_404(
             Compute, name=compute_name, cluster__name=compute_name_cluster_name)
-        if not compute.cluster.project in request.user.groups.all:
+        if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
         if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
             return Response("Compute is not a member of an active computeset",

@@ -77,7 +77,6 @@ def submit_computeset(cset):
         update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
-
 @shared_task(ignore_result=True)
 def cancel_computeset(cset):
     """ Sending --signal=USR1 to a running computeset job will allow it exit
@@ -373,8 +372,8 @@ def update_clusters(clusters_json):
                     cset = ComputeSet.objects.get(computes__id__exact=compute_obj.id,
                                                   state__in=[ComputeSet.CSET_STATE_RUNNING])
                     if (cset.state == ComputeSet.CSET_STATE_RUNNING
-                            and not cset.computes.filter(state="active")):
-                        cancel_computeset.delay(cset)
+                            and not cset.computes.filter(state="active").exists()):
+                        cancel_computeset.delay({'id':cset.id, 'jobid':cset.jobid})
                 except ComputeSet.DoesNotExist:
                     print "Computeset for compute %s not found" % compute_obj.name
                 except:
