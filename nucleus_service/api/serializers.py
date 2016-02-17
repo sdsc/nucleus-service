@@ -72,8 +72,8 @@ class ComputeSetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComputeSet
-        fields = ['computes', 'id', 'state', 'cluster']
-        read_only_fields = ('computes', 'id', 'state', 'cluster')
+        fields = ['computes', 'id', 'state', 'cluster', 'account']
+        read_only_fields = ('computes', 'id', 'state', 'cluster', 'account')
 
 
 class FullComputeSetSerializer(serializers.ModelSerializer):
