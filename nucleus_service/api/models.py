@@ -69,7 +69,7 @@ class Compute(models.Model):
 
     class Meta:
         managed = True
-
+        unique_together = (("name", "cluster"),)
 
 class ComputeInterface(models.Model):
     ip = models.GenericIPAddressField(default='0.0.0.0', null=True)
