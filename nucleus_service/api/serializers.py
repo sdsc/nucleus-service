@@ -56,13 +56,22 @@ class ComputeInterfaceSerializer(serializers.ModelSerializer):
 class ComputeSerializer(serializers.ModelSerializer):
     cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
     interface = ComputeInterfaceSerializer(many=True, read_only=True)
+    active_computeset = serializers.SerializerMethodField()
+
+    def get_active_computeset(self, compute):
+        try:
+            return ComputeSet.objects.get(state__in=["created", "running"], computes=compute.id).id
+        except ComputeSet.DoesNotExist:
+            return None
 
     class Meta:
         model = Compute
         fields = ("name", "interface", "memory",
-                  "cpus", "disksize", "cluster", "type", "state")
+                  "cpus", "disksize", "cluster", "type", "state", "active_computeset")
+        #          "cpus", "disksize", "cluster", "type", "state")
         read_only_fields = ("interface", "memory", "cpus",
-                            "disksize", "cluster", "type", "state")
+        #                    "disksize", "cluster", "type", "state")
+                            "disksize", "cluster", "type", "state", "active_computeset")
         depth = 1
 
 
