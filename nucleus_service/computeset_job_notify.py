@@ -2,6 +2,7 @@
 
 import os
 from api.tasks import update_computeset
+import time
 
 from nucleus.celery import *
 
@@ -22,5 +23,7 @@ if os.environ.has_key('SLURM_JOB_NAME'):
 
 if os.environ.has_key('SLURM_JOB_NODELIST'):
     request['nodelist'] = str(os.environ['SLURM_JOB_NODELIST'])
+
+request['start_time'] = int(time.time())
 
 update_computeset.delay(request)
