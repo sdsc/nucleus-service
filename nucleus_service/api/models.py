@@ -142,6 +142,7 @@ class ComputeSet(models.Model):
     state = models.CharField(max_length=128,
                              choices=CSET_STATES,
                              default=CSET_STATE_CREATED)
+    start_time = models.PositiveIntegerField(null=True)
 
     class Meta:
         managed = True

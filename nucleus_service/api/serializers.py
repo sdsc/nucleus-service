@@ -68,9 +68,7 @@ class ComputeSerializer(serializers.ModelSerializer):
         model = Compute
         fields = ("name", "interface", "memory",
                   "cpus", "disksize", "cluster", "type", "state", "active_computeset")
-        #          "cpus", "disksize", "cluster", "type", "state")
         read_only_fields = ("interface", "memory", "cpus",
-        #                    "disksize", "cluster", "type", "state")
                             "disksize", "cluster", "type", "state", "active_computeset")
         depth = 1
 
@@ -81,8 +79,8 @@ class ComputeSetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComputeSet
-        fields = ['computes', 'id', 'state', 'cluster', 'account']
-        read_only_fields = ('computes', 'id', 'state', 'cluster', 'account')
+        fields = ['computes', 'id', 'state', 'cluster', 'account', 'walltime_mins', 'start_time']
+        read_only_fields = ('computes', 'id', 'state', 'cluster', 'account', 'walltime_mins', 'start_time')
 
 
 class FullComputeSetSerializer(serializers.ModelSerializer):

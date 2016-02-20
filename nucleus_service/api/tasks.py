@@ -145,6 +145,9 @@ def update_computeset(cset_json):
         if "node_count" in cset_json:
             cset.node_count = cset_json["node_count"]
 
+        if "start_time" in cset_json:
+            cset.start_time = cset_json["start_time"]
+
         cset.save()
 
         # The following will only exist after jobscript barrier...
