@@ -175,32 +175,6 @@ def update_computeset(cset_json):
                     # TODO: vlan & switchport configuration
                     poweron_nodeset.delay(nodes, hosts, None)
 
-            # Job passed from SUBMITTED to COMPLETED state directly...
-            if (old_cset_state == ComputeSet.CSET_STATE_SUBMITTED
-                and cset.state == ComputeSet.CSET_STATE_COMPLETED):
-                if cset.nodelist is not None:
-                    hosts = hostlist.expand_hostlist("%s" % cset.nodelist)
-                    # TODO: anything else todo?
-
-            # Job passed from RUNNING to ENDING state...
-            if (old_cset_state == ComputeSet.CSET_STATE_RUNNING
-                and cset.state == ComputeSet.CSET_STATE_ENDING):
-                if cset.nodelist is not None:
-                    nodes = []
-                    for compute in cset.computes.all():
-                        nodes.append(compute.rocks_name)
-
-                    poweroff_nodes.delay(nodes, "shutdown")
-                    # TODO: vlan & switchport de-configuration
-
-            # Job passed from RUNNING to CANCELLED state...
-            if (old_cset_state == ComputeSet.CSET_STATE_RUNNING
-                and cset.state == ComputeSet.CSET_STATE_CANCELLED):
-                if cset.nodelist is not None:
-                    nodes = [compute.rocks_name for compute in cset.computes.all()]
-                    poweroff_nodes.delay(nodes, "shutdown")
-                    # TODO: vlan & switchport de-configuration
-
     except ComputeSet.DoesNotExist:
         cset = None
         msg = "update_computeset: %s" % (
@@ -371,16 +345,6 @@ def update_clusters(clusters_json):
                 compute_obj.disksize = compute_rocks["disksize"]
                 compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.save()
-                try:
-                    cset = ComputeSet.objects.get(computes__id__exact=compute_obj.id,
-                                                  state__in=[ComputeSet.CSET_STATE_RUNNING])
-                    if (cset.state == ComputeSet.CSET_STATE_RUNNING
-                            and not cset.computes.filter(state="active").exists()):
-                        cancel_computeset.delay({'id':cset.id, 'jobid':cset.jobid})
-                except ComputeSet.DoesNotExist:
-                    print "Computeset for compute %s not found" % compute_obj.name
-                except:
-                    print traceback.format_exc()
 
             for interface in compute_rocks['interfaces']:
                 if interface["mac"]:
