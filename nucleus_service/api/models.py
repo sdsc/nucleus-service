@@ -13,6 +13,8 @@ class Frontend(models.Model):
     cpus = models.IntegerField(null=True)
     memory = models.IntegerField(null=True)
     disksize = models.IntegerField(null=True)
+    image_state = models.CharField(max_length=30, null=True)
+    image_locked = models.NullBooleanField()
     state = models.CharField(max_length=64, null=True)
     type = models.CharField(max_length=16)
 
@@ -63,6 +65,8 @@ class Compute(models.Model):
     host = models.CharField(max_length=128, null=True)
     cpus = models.IntegerField(null=True)
     disksize = models.IntegerField(null=True)
+    image_state = models.CharField(max_length=30, null=True)
+    image_locked = models.NullBooleanField()
     memory = models.IntegerField(null=True)
     state = models.CharField(max_length=64, null=True)
     type = models.CharField(max_length=16)

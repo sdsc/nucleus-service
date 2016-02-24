@@ -300,6 +300,13 @@ def update_clusters(clusters_json):
                 frontend.disksize = cluster_rocks["disksize"]
                 frontend.cpus = cluster_rocks["cpus"]
                 frontend.save()
+
+            if(frontend.image_state != cluster_rocks["img_state"]
+                or frontend.image_locked != cluster_rocks["img_locked"]):
+                frontend.image_state = cluster_rocks["img_state"]
+                frontend.image_locked = cluster_rocks["img_locked"]
+                frontend.save()
+
         except Cluster.DoesNotExist:
             frontend = Frontend()
             frontend.name = cluster_rocks["frontend"]
@@ -309,6 +316,8 @@ def update_clusters(clusters_json):
             frontend.disksize = cluster_rocks["disksize"]
             frontend.cpus = cluster_rocks["cpus"]
             frontend.type = cluster_rocks["type"]
+            frontend.image_state = cluster_rocks["img_state"]
+            frontend.image_locked = cluster_rocks["img_locked"]
             frontend.save()
 
             cluster_obj = Cluster()
@@ -336,15 +345,23 @@ def update_clusters(clusters_json):
                 compute_obj.disksize = compute_rocks["disksize"]
                 compute_obj.cpus = compute_rocks["cpus"]
                 compute_obj.type = compute_rocks["type"]
+                compute_obj.image_state = compute_rocks["img_state"]
+                compute_obj.image_locked = compute_rocks["img_locked"]
                 compute_obj.save()
-            elif(compute_obj.state != compute_rocks["state"]
-                or compute_obj.memory != compute_rocks["mem"]
-                or compute_obj.cpus != compute_rocks["cpus"]):
-                compute_obj.state = compute_rocks["state"]
-                compute_obj.memory = compute_rocks["mem"]
-                compute_obj.disksize = compute_rocks["disksize"]
-                compute_obj.cpus = compute_rocks["cpus"]
-                compute_obj.save()
+            else:
+                if(compute_obj.state != compute_rocks["state"]
+                    or compute_obj.memory != compute_rocks["mem"]
+                    or compute_obj.cpus != compute_rocks["cpus"]):
+                    compute_obj.state = compute_rocks["state"]
+                    compute_obj.memory = compute_rocks["mem"]
+                    compute_obj.disksize = compute_rocks["disksize"]
+                    compute_obj.cpus = compute_rocks["cpus"]
+                    compute_obj.save()
+                if(compute_obj.image_state != compute_rocks["img_state"]
+                    or compute_obj.image_locked != compute_rocks["img_locked"]):
+                    compute_obj.image_state = compute_rocks["img_state"]
+                    compute_obj.image_locked = compute_rocks["img_locked"]
+                    compute_obj.save()
 
             for interface in compute_rocks['interfaces']:
                 if interface["mac"]:

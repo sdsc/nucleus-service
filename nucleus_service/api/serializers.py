@@ -46,8 +46,8 @@ class FrontendSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Frontend
-        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip")
-        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip")
+        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "image_state", "image_locked")
+        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "image_state", "image_locked")
         depth = 1
 
 
@@ -74,9 +74,9 @@ class ComputeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compute
         fields = ("name", "interface", "memory",
-                  "cpus", "disksize", "cluster", "type", "state", "active_computeset")
+                  "cpus", "disksize", "cluster", "type", "state", "active_computeset", "image_state", "image_locked")
         read_only_fields = ("interface", "memory", "cpus",
-                            "disksize", "cluster", "type", "state", "active_computeset")
+                            "disksize", "cluster", "type", "state", "active_computeset", "image_state", "image_locked")
         depth = 1
 
 
