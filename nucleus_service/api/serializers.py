@@ -28,19 +28,26 @@ class FrontendInterfaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FrontendInterface
-        fields = ("ip", "netmask", "mac", "iface", "subnet")
-        read_only_fields = ("ip", "netmask", "mac", "iface", "subnet")
+        fields = ("mac", "iface")
+        read_only_fields = ("mac", "iface")
         depth = 1
 
 
 class FrontendSerializer(serializers.ModelSerializer):
 
     interface = FrontendInterfaceSerializer(many=True, read_only=True)
+    pub_ip = serializers.SerializerMethodField()
+    def get_pub_ip(self, frontend):
+        try:
+            return frontend.interface.exclude( iface="private" ).first().ip
+        except FrontendInterface.DoesNotExist:
+            return None
+
 
     class Meta:
         model = Frontend
-        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface")
-        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface")
+        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip")
+        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip")
         depth = 1
 
 
@@ -48,8 +55,8 @@ class ComputeInterfaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComputeInterface
-        fields = ("ip", "netmask", "mac", "iface", "subnet")
-        read_only_fields = ("ip", "netmask", "mac", "iface", "subnet")
+        fields = ("mac", "iface")
+        read_only_fields = ("mac", "iface")
         depth = 1
 
 
