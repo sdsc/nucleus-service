@@ -8,6 +8,25 @@ from nucleus.celery import *
 
 from api.tasks import update_clusters
 
+NAS = "comet-image-32-6"
+
+images_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'storagemap', NAS,
+                      'json=true'], stdout=PIPE, stderr=PIPE)
+(out, err) = images_req.communicate()
+
+images = json.loads(out)[0]["storagemap"]
+
+img_states = {}
+
+for image in images:
+    compute = image["zvol"]
+    if compute.endswith("-vol"):
+        compute = compute[:-4]
+    img_states[compute] = {
+        'state': image['state'],
+        'locked': image['locked'] if image['locked'] else False
+    }
+    
 clusters_req = Popen(['/opt/rocks/bin/rocks', 'list', 'cluster',
                       'json=true', 'status=true'], stdout=PIPE, stderr=PIPE)
 (out, err) = clusters_req.communicate()
@@ -24,6 +43,8 @@ for record in clusters:
             'mem': 0,
             'cpus': 0,
             'disksize': 0,
+            'img_locked': img_states[record['frontend']]['locked'] if img_states.get(record['frontend']) else None,
+            'img_state': img_states[record['frontend']]['state'] if img_states.get(record['frontend']) else None,
             'state': record['cluster'][0]['status'],
             'type': record['cluster'][0]['type'],
             'computes': []
@@ -37,6 +58,8 @@ for record in clusters:
                 'mem': 0,
                 'cpus': 0,
                 'disksize': 0,
+                'img_locked': img_states[client['client nodes']]['locked'] if img_states.get(client['client nodes']) else None,
+                'img_state': img_states[client['client nodes']]['state'] if img_states.get(client['client nodes']) else None,
                 'type': client['type'],
                 'state': client['status']
             } for client in record["cluster"]
