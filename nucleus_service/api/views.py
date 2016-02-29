@@ -356,6 +356,7 @@ class ComputeSetViewSet(ModelViewSet):
                         ComputeSet.CSET_STATE_CREATED, 
                         ComputeSet.CSET_STATE_SUBMITTED, 
                         ComputeSet.CSET_STATE_RUNNING, 
+                        ComputeSet.CSET_STATE_FAILED, 
                         ComputeSet.CSET_STATE_ENDING]
                 ).exclude(state="active")[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
@@ -393,7 +394,7 @@ class ComputeSetViewSet(ModelViewSet):
             compute = Compute.objects.get(name=node, cluster=clust)
 
             other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(
-                state__exact=ComputeSet.CSET_STATE_COMPLETED)
+                state__in=[ComputeSet.CSET_STATE_COMPLETED, ComputeSet.CSET_STATE_FAILED])
             if other_cs_query.exists():
                 cset.delete()
                 err_cs = other_cs_query.get()
