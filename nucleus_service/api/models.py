@@ -85,6 +85,10 @@ class ComputeInterface(models.Model):
 
     class Meta:
         managed = True
+        unique_together = (("mac", "iface", "compute"),
+            ("ip", "iface", "compute"),
+            ("netmask", "iface", "compute"),
+            ("subnet", "iface", "compute"))
 
 # #################################################
 #  NUCLEUSUSER
