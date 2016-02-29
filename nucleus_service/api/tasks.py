@@ -145,7 +145,7 @@ def update_computeset(cset_json):
         if "node_count" in cset_json:
             cset.node_count = cset_json["node_count"]
 
-        if "start_time" in cset_json:
+        if "start_time" in cset_json and not cset.start_time:
             cset.start_time = cset_json["start_time"]
 
         cset.save()
