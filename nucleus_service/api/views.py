@@ -356,7 +356,6 @@ class ComputeSetViewSet(ModelViewSet):
                         ComputeSet.CSET_STATE_CREATED, 
                         ComputeSet.CSET_STATE_SUBMITTED, 
                         ComputeSet.CSET_STATE_RUNNING, 
-                        ComputeSet.CSET_STATE_FAILED, 
                         ComputeSet.CSET_STATE_ENDING]
                 ).exclude(state="active")[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
