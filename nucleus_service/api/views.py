@@ -393,7 +393,7 @@ class ComputeSetViewSet(ModelViewSet):
             compute = Compute.objects.get(name=node, cluster=clust)
 
             other_cs_query = ComputeSet.objects.filter(computes__id__exact=compute.id).exclude(
-                state__in=[ComputeSet.CSET_STATE_COMPLETED, ComputeSet.CSET_STATE_FAILED])
+                state__in=[ComputeSet.CSET_STATE_COMPLETED, ComputeSet.CSET_STATE_FAILED, ComputeSet.CSET_STATE_CANCELLED])
             if other_cs_query.exists():
                 cset.delete()
                 err_cs = other_cs_query.get()
