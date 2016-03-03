@@ -43,7 +43,7 @@ def submit_computeset(cset):
            '--output=%s.out' % (cset['name']),
            '--uid=%s' % (cset['user']),
            '--account=%s' % (cset['account']),
-           '--workdir=/tmp',
+           '--workdir=/home/%s/VC-JOBS' % (cset['user']),
            '--parsable',
            '--partition=virt',
            '--nodes=%s-%s' % (cset['node_count'], cset['node_count']),
