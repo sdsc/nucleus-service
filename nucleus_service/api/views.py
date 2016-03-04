@@ -184,7 +184,7 @@ class ComputeViewSet(ViewSet):
 #  CONSOLE
 ##################################################
 
-def get_console(console_compute_name):
+def get_console(request, console_compute_name):
     """Open VNC console to named resource."""
     resp = "Success"
     sleep_time = 15
@@ -254,8 +254,8 @@ def get_console(console_compute_name):
     tun_port = ''
 
     tun_port = proc.stdout.readline().strip()
-    url_base = "https://comet-nucleus.sdsc.edu/nucleus-guacamole/index.html?hostname=localhost"
-    url = "%s&port=%s&password=%s" % (url_base, tun_port, passwd)
+    url_base = "/nucleus-guacamole/index.html?hostname=localhost"
+    url = request.build_absolute_uri("%s&port=%s&password=%s" % (url_base, tun_port, passwd))
 
     response = Response(
         url,
@@ -272,7 +272,7 @@ class ConsoleViewSet(ViewSet):
             Compute, name=console_compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(compute.rocks_name)
+        return get_console(request, compute.rocks_name)
 
 
 class FrontendConsoleViewSet(ViewSet):
@@ -282,7 +282,7 @@ class FrontendConsoleViewSet(ViewSet):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if not clust.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(clust.frontend.rocks_name)
+        return get_console(request, clust.frontend.rocks_name)
 
 
 ##################################################
