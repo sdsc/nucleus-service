@@ -357,7 +357,7 @@ class ComputeSetViewSet(ModelViewSet):
                         ComputeSet.CSET_STATE_SUBMITTED, 
                         ComputeSet.CSET_STATE_RUNNING, 
                         ComputeSet.CSET_STATE_ENDING]
-                ).exclude(state="active")[:int(request.data["count"])]
+                ).exclude(state="active").exclude(image_state__in=["mapped",None]).exclude(image_locked=True)[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
             if(len(nodes) < int(request.data["count"]) or int(request.data["count"]) == 0):
                 return Response("There are %i nodes available for starting. Requested number should be greater than zero."%len(nodes),
@@ -399,6 +399,76 @@ class ComputeSetViewSet(ModelViewSet):
                 err_cs = other_cs_query.get()
                 return Response("The compute %s belongs to computeset %s which is in %s state" % (node, err_cs.id, err_cs.state), status=status.HTTP_400_BAD_REQUEST)
 
+            if (compute.image_state not in ["unmapped", None]) or compute.image_locked:
+                cset.delete()
+                return Response("The node %s's image is in %s state and image locked status is %s. Please contact the user support if the VM is not running." %(node, compute.image_state, compute.image_locked), status=status.HTTP_400_BAD_REQUEST)
+
+            if compute.cluster.name != request.data["cluster"]:
+                cset.delete()
+                return Response("The node %s does not belong to the cluster %s, belongs to %s" % (node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
+
+            cset.computes.add(compute)
+
+        submit_computeset.delay(FullComputeSetSerializer(cset).data)
+
+        # We should only poweron computes after entering jobscript and
+        # finishing the PROLOG on all allocated nodes. At that point the
+        # nodelist will be returned and we can call poweron_nodeset()
+        #poweron_nodeset.delay(nodes, hosts)
+
+        location = "/nucleus/v1/computeset/%s" % (cset.id)
+
+        serializer = ComputeSetSerializer(cset)
+        response = Response(
+            serializer.data,
+            status=201,
+            headers={'Location': location})
+
+        return response
+
+    @detail_route(methods=['put'])
+    def shutdown(self, request, computeset_id, format=None):
+        """Shutdown the nodes in the identified ComputeSet."""
+        cset = ComputeSet.objects.get(pk=computeset_id)
+        if not cset.cluster.project in request.user.groups.all():
+            raise PermissionDenied()
+
+        computes = []
+        for compute in cset.computes.all():
+            computes.append(compute.rocks_name)
+            if compute.cluster.name != request.data["cluster"]:
+                cset.delete()
+                return Response("The node %s does not belong to the cluster %s, belongs to %s" % (node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)
+
+            cset.computes.add(compute)
+
+        submit_computeset.delay(FullComputeSetSerializer(cset).data)
+
+        # We should only poweron computes after entering jobscript and
+        # finishing the PROLOG on all allocated nodes. At that point the
+        # nodelist will be returned and we can call poweron_nodeset()
+        #poweron_nodeset.delay(nodes, hosts)
+
+        location = "/nucleus/v1/computeset/%s" % (cset.id)
+
+        serializer = ComputeSetSerializer(cset)
+        response = Response(
+            serializer.data,
+            status=201,
+            headers={'Location': location})
+
+        return response
+
+    @detail_route(methods=['put'])
+    def shutdown(self, request, computeset_id, format=None):
+        """Shutdown the nodes in the identified ComputeSet."""
+        cset = ComputeSet.objects.get(pk=computeset_id)
+        if not cset.cluster.project in request.user.groups.all():
+            raise PermissionDenied()
+
+        computes = []
+        for compute in cset.computes.all():
+            computes.append(compute.rocks_name)
             if compute.cluster.name != request.data["cluster"]:
                 cset.delete()
                 return Response("The node %s does not belong to the cluster %s, belongs to %s" % (node, request.data["cluster"], compute.cluster.name), status=status.HTTP_400_BAD_REQUEST)

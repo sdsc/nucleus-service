@@ -67,7 +67,7 @@ class ComputeSerializer(serializers.ModelSerializer):
 
     def get_active_computeset(self, compute):
         try:
-            return ComputeSet.objects.get(state__in=["created", "running"], computes=compute.id).id
+            return ComputeSet.objects.get(state__in=["created", "running", "submitted", "ending"], computes=compute.id).id
         except ComputeSet.DoesNotExist:
             return None
 
