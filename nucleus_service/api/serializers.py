@@ -64,6 +64,7 @@ class ComputeSerializer(serializers.ModelSerializer):
     cluster = serializers.SlugRelatedField(read_only=True, slug_field='name')
     interface = ComputeInterfaceSerializer(many=True, read_only=True)
     active_computeset = serializers.SerializerMethodField()
+    active_computeset_state = serializers.SerializerMethodField()
 
     def get_active_computeset(self, compute):
         try:
@@ -71,12 +72,19 @@ class ComputeSerializer(serializers.ModelSerializer):
         except ComputeSet.DoesNotExist:
             return None
 
+    def get_active_computeset_state(self, compute):
+        try:
+            return ComputeSet.objects.get(state__in=["created", "running", "submitted", "ending"], computes=compute.id).state
+        except ComputeSet.DoesNotExist:
+            return None
+
+
     class Meta:
         model = Compute
         fields = ("name", "interface", "memory",
-                  "cpus", "disksize", "cluster", "type", "state", "active_computeset", "image_state", "image_locked")
+                  "cpus", "disksize", "cluster", "type", "state", "active_computeset", "active_computeset_state", "image_state", "image_locked")
         read_only_fields = ("interface", "memory", "cpus",
-                            "disksize", "cluster", "type", "state", "active_computeset", "image_state", "image_locked")
+                            "disksize", "cluster", "type", "state", "active_computeset", "active_computeset_state", "image_state", "image_locked")
         depth = 1
 
 
