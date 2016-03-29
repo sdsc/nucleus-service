@@ -2,8 +2,12 @@
 from distutils.core import setup
 from setuptools import find_packages
 
-with open('README.md') as readme:
-    long_description = readme.read()
+from os import path
+
+here = path.abspath(path.dirname(__file__))
+
+with open(path.join(here, 'README.md')) as f:
+    long_description = f.read()
 
 with open('requirements.txt') as reqs:
     install_requires = [
@@ -18,6 +22,9 @@ setup(
     author_email='dmishin@sdsc.edu',
     packages=find_packages(),
     include_package_data=True,
+    package_data={
+        '': ['README.md'],
+    },
     url='https://github.com/sdsc/nucleus',
     license='Apache-2.0',
     description='Package description',
