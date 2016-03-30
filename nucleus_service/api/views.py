@@ -298,9 +298,10 @@ class ComputeSetViewSet(ModelViewSet):
         cset = ComputeSet.objects.filter(
             cluster__project__in=self.request.user.groups.all())
 
-        state = self.request.query_params.get('state', None)
-        if state is not None:
-            cset = cset.filter(state=state)
+        states = self.request.GET.getlist('state')
+        #state = self.request.query_params.get('state', None)
+        if states:
+            cset = cset.filter(state__in=states)
         return cset
 
     def retrieve(self, request, computeset_id, format=None):
@@ -357,7 +358,7 @@ class ComputeSetViewSet(ModelViewSet):
                         ComputeSet.CSET_STATE_SUBMITTED, 
                         ComputeSet.CSET_STATE_RUNNING, 
                         ComputeSet.CSET_STATE_ENDING]
-                ).exclude(state="active").exclude(image_state__in=["mapped",None]).exclude(image_locked=True)[:int(request.data["count"])]
+                ).exclude(state="active").filter(image_state__in=["unmapped",None]).exclude(image_locked=True)[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
             if(len(nodes) < int(request.data["count"]) or int(request.data["count"]) == 0):
                 return Response("There are %i nodes available for starting. Requested number should be greater than zero."%len(nodes),
