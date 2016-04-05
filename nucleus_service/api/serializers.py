@@ -37,17 +37,25 @@ class FrontendSerializer(serializers.ModelSerializer):
 
     interface = FrontendInterfaceSerializer(many=True, read_only=True)
     pub_ip = serializers.SerializerMethodField()
+    frontend_state = serializers.SerializerMethodField()
     def get_pub_ip(self, frontend):
         try:
             return frontend.interface.exclude( iface="private" ).first().ip
         except FrontendInterface.DoesNotExist:
             return None
 
+    def get_frontend_state(self, frontend):
+        if(frontend.image_locked):
+            return "syncing"
+        if(frontend.image_state in ["unmapped", None]):
+            return "ready"
+        return "mapped"
+
 
     class Meta:
         model = Frontend
-        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "image_state", "image_locked")
-        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "image_state", "image_locked")
+        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "frontend_state")
+        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "frontend_state")
         depth = 1
 
 
@@ -65,6 +73,7 @@ class ComputeSerializer(serializers.ModelSerializer):
     interface = ComputeInterfaceSerializer(many=True, read_only=True)
     active_computeset = serializers.SerializerMethodField()
     active_computeset_state = serializers.SerializerMethodField()
+    compute_state = serializers.SerializerMethodField()
 
     def get_active_computeset(self, compute):
         try:
@@ -78,13 +87,20 @@ class ComputeSerializer(serializers.ModelSerializer):
         except ComputeSet.DoesNotExist:
             return None
 
+    def get_compute_state(self, compute):
+        if(compute.image_locked):
+            return "syncing"
+        if(compute.image_state in ["unmapped", None]):
+            return "ready"
+        return "mapped"
+
 
     class Meta:
         model = Compute
         fields = ("name", "interface", "memory",
-                  "cpus", "disksize", "cluster", "type", "state", "active_computeset", "active_computeset_state", "image_state", "image_locked")
+                  "cpus", "disksize", "cluster", "type", "state", "active_computeset", "active_computeset_state", "compute_state")
         read_only_fields = ("interface", "memory", "cpus",
-                            "disksize", "cluster", "type", "state", "active_computeset", "active_computeset_state", "image_state", "image_locked")
+                            "disksize", "cluster", "type", "state", "active_computeset", "active_computeset_state", "compute_state")
         depth = 1
 
 
