@@ -49,7 +49,7 @@ class FrontendSerializer(serializers.ModelSerializer):
             return "syncing"
         if(frontend.image_state in ["unmapped", None]):
             return "ready"
-        return "mapped"
+        return "synced"
 
 
     class Meta:
@@ -92,7 +92,7 @@ class ComputeSerializer(serializers.ModelSerializer):
             return "syncing"
         if(compute.image_state in ["unmapped", None]):
             return "ready"
-        return "mapped"
+        return "synced"
 
 
     class Meta:
