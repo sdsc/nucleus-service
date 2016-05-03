@@ -576,7 +576,11 @@ class FrontendViewSet(ViewSet):
     @detail_route(methods=['put'])
     def reset(self, request, frontend_cluster_name, format=None):
         """Reset the frontend of a named cluster."""
-        return Response("todo")
+        clust = get_object_or_404(Cluster, name=frontend_cluster_name)
+        if not clust.project in request.user.groups.all():
+            raise PermissionDenied()
+        poweroff_nodes.delay([clust.frontend.rocks_name], "reset")
+        return Response(status=204)
 
     @detail_route(methods=['put'])
     def poweron(self, request, frontend_cluster_name, format=None):
