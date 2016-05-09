@@ -128,22 +128,22 @@ CELERY_TASK_SERIALIZER = 'json'
 
 CELERY_ROUTES = (
     {'api.tasks.submit_computeset':
-     {'routing_key': 'comet-fe1'}
+     {'routing_key': 'frontend'}
      },
     {'api.tasks.cancel_computeset':
-     {'routing_key': 'comet-fe1'}
+     {'routing_key': 'frontend'}
      },
     {'api.tasks.poweron_nodeset':
-     {'routing_key': 'comet-fe1'}
+     {'routing_key': 'frontend'}
      },
     {'api.tasks.poweron_nodes':
-     {'routing_key': 'comet-fe1'}
+     {'routing_key': 'frontend'}
      },
     {'api.tasks.poweroff_nodes':
-     {'routing_key': 'comet-fe1'}
+     {'routing_key': 'frontend'}
      },
     {'api.tasks.attach_iso':
-     {'routing_key': 'comet-fe1'}
+     {'routing_key': 'frontend'}
      },
     {'api.tasks.update_computeset':
      {'routing_key': 'update'}
@@ -154,8 +154,8 @@ CELERY_ROUTES = (
 )
 
 CELERY_QUEUES = {
-    'comet-fe1': {
-        'binding_key': 'comet-fe1',
+    'frontend': {
+        'binding_key': 'frontend',
     },
     'update': {
         'binding_key': 'update',

@@ -14,10 +14,10 @@ version:
 	python -c "import django; print(django.get_version())"
 
 worker-fe1-debug:
-	cd nucleus_service; celery -A nucleus -l debug -c 2 -B -Q comet-fe1 worker
+	cd nucleus_service; celery -A nucleus -l debug -c 2 -B -Q frontend worker
 
 worker-fe1:
-	cd nucleus_service; celery -A nucleus --detach -c 2 -B -Q comet-fe1 worker
+	cd nucleus_service; celery -A nucleus --detach -c 50 -B -Q frontend worker
 
 worker-update-debug:
 	cd nucleus_service; celery -A nucleus -l debug -Q update worker
