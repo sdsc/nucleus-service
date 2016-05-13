@@ -65,7 +65,20 @@ for record in clusters:
             } for client in record["cluster"]
         ]
 
+gateway_req_params = ['/opt/rocks/bin/rocks', 'list', 'host', 'route']
+gateway_req_params.extend(cluster['frontend'] for cluster in result)
+gateway_req_params.append('json=true')
+gateway_req = Popen(gateway_req_params, stdout=PIPE, stderr=PIPE)
+(out, err) = gateway_req.communicate()
+routes = json.loads(out)
+
 for cluster in result:
+    try:
+        cluster_routes = (route for route in routes if route['host'] == cluster['frontend']).next()['route']
+        cluster['gateway'] = (route for route in cluster_routes if route['network'] == "0.0.0.0").next()['gateway']
+    except:
+        traceback.print_exc()
+
     try:
         fe_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'interface',
                         cluster['frontend'], 'json=true'], stdout=PIPE, stderr=PIPE)
@@ -130,6 +143,7 @@ for cluster in result:
     except:
         # print "Unexpected error:", traceback.print_tb(sys.exc_info()[2])
         traceback.print_exc()
+
 
 update_clusters.delay(result)
 #print(json.dumps(result))
