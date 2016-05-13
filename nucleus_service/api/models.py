@@ -32,7 +32,7 @@ class FrontendInterface(models.Model):
     mac = models.CharField(max_length=60, default='', unique=True)
     iface = models.CharField(max_length=64, default='')
     subnet = models.CharField(max_length=64, null=True)
-    frontend = models.ForeignKey(Frontend, related_name='interface')
+    frontend = models.ForeignKey(Frontend, related_name='interface', on_delete=models.CASCADE)
 
     class Meta:
         managed = True
@@ -45,8 +45,8 @@ class FrontendInterface(models.Model):
 class Cluster(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.TextField(default="")
-    project = models.ForeignKey(django.contrib.auth.models.Group, null=True)
-    frontend = models.ForeignKey(Frontend, related_name='cluster')
+    project = models.ForeignKey(django.contrib.auth.models.Group, null=True, on_delete=models.CASCADE)
+    frontend = models.ForeignKey(Frontend, related_name='cluster', on_delete=models.CASCADE)
     vlan = models.IntegerField(null=True)
     username = models.CharField(max_length=128, null=False) # username under which we run the VMs for the cluster
 
@@ -65,7 +65,7 @@ class Allocation(models.Model):
 class Compute(models.Model):
     name = models.CharField(max_length=128)
     rocks_name = models.CharField(max_length=128, unique=True)
-    cluster = models.ForeignKey(Cluster, related_name='computes')
+    cluster = models.ForeignKey(Cluster, related_name='computes', on_delete=models.CASCADE)
     host = models.CharField(max_length=128, null=True)
     cpus = models.IntegerField(null=True)
     disksize = models.IntegerField(null=True)
@@ -83,7 +83,7 @@ class ComputeInterface(models.Model):
     ip = models.GenericIPAddressField(default='0.0.0.0', null=True)
     netmask = models.GenericIPAddressField(default='0.0.0.0', null=True)
     mac = models.CharField(max_length=60, default='', unique=True)
-    compute = models.ForeignKey(Compute, related_name='interface')
+    compute = models.ForeignKey(Compute, related_name='interface', on_delete=models.CASCADE)
     iface = models.CharField(max_length=64, default='')
     subnet = models.CharField(max_length=64, null=True)
 
@@ -140,7 +140,7 @@ class ComputeSet(models.Model):
         (CSET_STATE_COMPLETED, 'Completed'),
     )
     computes = models.ManyToManyField(Compute, related_name='computeset')
-    cluster = models.ForeignKey(Cluster)
+    cluster = models.ForeignKey(Cluster, on_delete=models.CASCADE)
     jobid = models.PositiveIntegerField(unique=True, null=True)
     name = models.CharField(max_length=64, unique=True, null=True)
     user = models.CharField(max_length=30)
