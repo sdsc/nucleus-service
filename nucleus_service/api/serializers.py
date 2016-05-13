@@ -40,7 +40,7 @@ class FrontendSerializer(serializers.ModelSerializer):
     frontend_state = serializers.SerializerMethodField()
     def get_pub_ip(self, frontend):
         try:
-            return frontend.interface.exclude( iface="private" ).first().ip
+            return frontend.interface.exclude( subnet="private" ).first().ip
         except FrontendInterface.DoesNotExist:
             return None
 
