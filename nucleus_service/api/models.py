@@ -16,6 +16,10 @@ class Frontend(models.Model):
     image_state = models.CharField(max_length=30, null=True)
     image_locked = models.NullBooleanField()
     state = models.CharField(max_length=64, null=True)
+    gateway = models.GenericIPAddressField(default='0.0.0.0', null=True)
+    dns1 = models.GenericIPAddressField(default='132.249.20.25', null=True)
+    dns2 = models.GenericIPAddressField(default='198.202.75.26', null=True)
+    ntp = models.GenericIPAddressField(default='132.249.20.25', null=True)
     type = models.CharField(max_length=16)
 
     class Meta:

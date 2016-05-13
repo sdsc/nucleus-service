@@ -282,97 +282,104 @@ def update_clusters(clusters_json):
     syslog.syslog(syslog.LOG_DEBUG, "update_clusters() running")
     for cluster_rocks in clusters_json:
         try:
-            cluster_obj = Cluster.objects.get(
-                frontend__rocks_name=cluster_rocks["frontend"])
+            try:
+                cluster_obj = Cluster.objects.get(
+                    frontend__rocks_name=cluster_rocks["frontend"])
 
-            if cluster_obj.vlan != cluster_rocks["vlan"]:
-                cluster_obj.vlan = cluster_rocks["vlan"]
-                cluster_obj.save()
+                if cluster_obj.vlan != cluster_rocks["vlan"]:
+                    cluster_obj.vlan = cluster_rocks["vlan"]
+                    cluster_obj.save()
 
-            frontend = Frontend.objects.get(
-                rocks_name=cluster_rocks["frontend"])
-            if(frontend.state != cluster_rocks["state"]
-                or frontend.memory != cluster_rocks["mem"]
-                or frontend.disksize != cluster_rocks["disksize"]
-                or frontend.cpus != cluster_rocks["cpus"]):
+                frontend = Frontend.objects.get(
+                    rocks_name=cluster_rocks["frontend"])
+                if(frontend.state != cluster_rocks["state"]
+                    or frontend.memory != cluster_rocks["mem"]
+                    or frontend.disksize != cluster_rocks["disksize"]
+                    or frontend.cpus != cluster_rocks["cpus"]):
+                    frontend.state = cluster_rocks["state"]
+                    frontend.memory = cluster_rocks["mem"]
+                    frontend.disksize = cluster_rocks["disksize"]
+                    frontend.cpus = cluster_rocks["cpus"]
+                    frontend.save()
+
+                if(frontend.image_state != cluster_rocks["img_state"]
+                    or frontend.image_locked != cluster_rocks["img_locked"]):
+                    frontend.image_state = cluster_rocks["img_state"]
+                    frontend.image_locked = cluster_rocks["img_locked"]
+                    frontend.save()
+
+                if frontend.gateway != cluster_rocks["gateway"]:
+                    frontend.gateway = cluster_rocks["gateway"]
+                    frontend.save()
+
+            except Cluster.DoesNotExist:
+                frontend = Frontend()
+                frontend.name = cluster_rocks["frontend"]
+                frontend.rocks_name = cluster_rocks["frontend"]
                 frontend.state = cluster_rocks["state"]
                 frontend.memory = cluster_rocks["mem"]
                 frontend.disksize = cluster_rocks["disksize"]
                 frontend.cpus = cluster_rocks["cpus"]
-                frontend.save()
-
-            if(frontend.image_state != cluster_rocks["img_state"]
-                or frontend.image_locked != cluster_rocks["img_locked"]):
+                frontend.type = cluster_rocks["type"]
                 frontend.image_state = cluster_rocks["img_state"]
                 frontend.image_locked = cluster_rocks["img_locked"]
                 frontend.save()
 
-        except Cluster.DoesNotExist:
-            frontend = Frontend()
-            frontend.name = cluster_rocks["frontend"]
-            frontend.rocks_name = cluster_rocks["frontend"]
-            frontend.state = cluster_rocks["state"]
-            frontend.memory = cluster_rocks["mem"]
-            frontend.disksize = cluster_rocks["disksize"]
-            frontend.cpus = cluster_rocks["cpus"]
-            frontend.type = cluster_rocks["type"]
-            frontend.image_state = cluster_rocks["img_state"]
-            frontend.image_locked = cluster_rocks["img_locked"]
-            frontend.save()
+                cluster_obj = Cluster()
+                cluster_obj.name = cluster_rocks["frontend"]
+                cluster_obj.vlan = cluster_rocks["vlan"]
+                cluster_obj.frontend = frontend
+                cluster_obj.save()
 
-            cluster_obj = Cluster()
-            cluster_obj.name = cluster_rocks["frontend"]
-            cluster_obj.vlan = cluster_rocks["vlan"]
-            cluster_obj.frontend = frontend
-            cluster_obj.save()
+            cluster_obj = Cluster.objects.get(
+                frontend__rocks_name=cluster_rocks["frontend"])
+            frontend = Frontend.objects.get(rocks_name=cluster_rocks["frontend"])
+            for interface in cluster_rocks['interfaces']:
+                if interface["mac"]:
+                    FrontendInterface.objects.update_or_create(
+                        frontend=frontend, iface=interface["iface"], defaults={
+                            'ip': interface["ip"],
+                            'netmask': interface["netmask"],
+                            'mac': interface["mac"], 
+                            'iface': interface["iface"], 
+                            'subnet': interface["subnet"]})
 
-        cluster_obj = Cluster.objects.get(
-            frontend__rocks_name=cluster_rocks["frontend"])
-        frontend = Frontend.objects.get(rocks_name=cluster_rocks["frontend"])
-        for interface in cluster_rocks['interfaces']:
-            if interface["mac"]:
-                FrontendInterface.objects.update_or_create(
-                    frontend=frontend, iface=interface["iface"], defaults={
-                        'ip': interface["ip"],
-                        'netmask': interface["netmask"],
-                        'mac': interface["mac"], 
-                        'iface': interface["iface"], 
-                        'subnet': interface["subnet"]})
-
-        for compute_rocks in cluster_rocks["computes"]:
-            compute_obj, created = Compute.objects.get_or_create(
-                rocks_name=compute_rocks["name"], cluster=cluster_obj)
-            if created:
-                compute_obj.name = compute_rocks["name"]
-                compute_obj.state = compute_rocks["state"]
-                compute_obj.memory = compute_rocks["mem"]
-                compute_obj.disksize = compute_rocks["disksize"]
-                compute_obj.cpus = compute_rocks["cpus"]
-                compute_obj.type = compute_rocks["type"]
-                compute_obj.image_state = compute_rocks["img_state"]
-                compute_obj.image_locked = compute_rocks["img_locked"]
-                compute_obj.save()
-            else:
-                if(compute_obj.state != compute_rocks["state"]
-                    or compute_obj.memory != compute_rocks["mem"]
-                    or compute_obj.cpus != compute_rocks["cpus"]):
+            for compute_rocks in cluster_rocks["computes"]:
+                compute_obj, created = Compute.objects.get_or_create(
+                    rocks_name=compute_rocks["name"], cluster=cluster_obj)
+                if created:
+                    compute_obj.name = compute_rocks["name"]
                     compute_obj.state = compute_rocks["state"]
                     compute_obj.memory = compute_rocks["mem"]
                     compute_obj.disksize = compute_rocks["disksize"]
                     compute_obj.cpus = compute_rocks["cpus"]
-                    compute_obj.save()
-                if(compute_obj.image_state != compute_rocks["img_state"]
-                    or compute_obj.image_locked != compute_rocks["img_locked"]):
+                    compute_obj.type = compute_rocks["type"]
                     compute_obj.image_state = compute_rocks["img_state"]
                     compute_obj.image_locked = compute_rocks["img_locked"]
                     compute_obj.save()
+                else:
+                    if(compute_obj.state != compute_rocks["state"]
+                        or compute_obj.memory != compute_rocks["mem"]
+                        or compute_obj.cpus != compute_rocks["cpus"]):
+                        compute_obj.state = compute_rocks["state"]
+                        compute_obj.memory = compute_rocks["mem"]
+                        compute_obj.disksize = compute_rocks["disksize"]
+                        compute_obj.cpus = compute_rocks["cpus"]
+                        compute_obj.save()
+                    if(compute_obj.image_state != compute_rocks["img_state"]
+                        or compute_obj.image_locked != compute_rocks["img_locked"]):
+                        compute_obj.image_state = compute_rocks["img_state"]
+                        compute_obj.image_locked = compute_rocks["img_locked"]
+                        compute_obj.save()
 
-            for interface in compute_rocks['interfaces']:
-                if interface["mac"]:
-                    ComputeInterface.objects.update_or_create(compute=compute_obj, iface=interface["iface"], 
-                        defaults={ 
-                            'ip': interface["ip"], 
-                            'netmask': interface["netmask"], 
-                            'mac': interface["mac"], 
-                            'iface': interface["iface"], 
-                            'subnet': interface["subnet"]})
+                for interface in compute_rocks['interfaces']:
+                    if interface["mac"]:
+                        ComputeInterface.objects.update_or_create(compute=compute_obj, iface=interface["iface"], 
+                            defaults={ 
+                                'ip': interface["ip"], 
+                                'netmask': interface["netmask"], 
+                                'mac': interface["mac"], 
+                                'iface': interface["iface"], 
+                                'subnet': interface["subnet"]})
+        except:
+            traceback.print_exc()

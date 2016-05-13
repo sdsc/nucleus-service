@@ -37,7 +37,21 @@ class FrontendSerializer(serializers.ModelSerializer):
 
     interface = FrontendInterfaceSerializer(many=True, read_only=True)
     pub_ip = serializers.SerializerMethodField()
+    pub_mac = serializers.SerializerMethodField()
+    pub_netmask = serializers.SerializerMethodField()
     frontend_state = serializers.SerializerMethodField()
+    def get_pub_mac(self, frontend):
+        try:
+            return frontend.interface.exclude( subnet="private" ).first().mac
+        except FrontendInterface.DoesNotExist:
+            return None
+
+    def get_pub_netmask(self, frontend):
+        try:
+            return frontend.interface.exclude( subnet="private" ).first().netmask
+        except FrontendInterface.DoesNotExist:
+            return None
+
     def get_pub_ip(self, frontend):
         try:
             return frontend.interface.exclude( subnet="private" ).first().ip
@@ -54,8 +68,8 @@ class FrontendSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Frontend
-        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "frontend_state")
-        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "frontend_state")
+        fields = ("name", "state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "pub_mac", "pub_netmask", "gateway", "dns1", "dns2", "ntp", "frontend_state")
+        read_only_fields = ("state", "memory", "cpus", "disksize", "type", "interface", "pub_ip", "pub_mac", "pub_netmask", "gateway", "dns1", "dns2", "ntp", "frontend_state")
         depth = 1
 
 
