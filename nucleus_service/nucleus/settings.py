@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import ssl
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOME_DIR = os.getenv("HOME")
@@ -124,7 +125,11 @@ REST_FRAMEWORK = {
     )
 }
 
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'auth'
+
+CELERY_SECURITY_KEY = '/var/secrets/cometvc/key.pem'
+CELERY_SECURITY_CERTIFICATE = '/var/secrets/cometvc/cert.pem'
+CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/*.pem'
 
 CELERY_ROUTES = (
     {'api.tasks.submit_computeset':
@@ -162,6 +167,12 @@ CELERY_QUEUES = {
     },
 }
 
+BROKER_USE_SSL = {
+  'keyfile': '/var/secrets/cometvc/key.pem',
+  'certfile': '/var/secrets/cometvc/cert.pem',
+  'ca_certs': '/var/secrets/cometvc/ca.pem',
+  'cert_reqs': ssl.CERT_REQUIRED
+}
 
 SWAGGER_SETTINGS = {
     "api_version": '1.0',  # API's version
