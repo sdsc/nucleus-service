@@ -193,7 +193,7 @@ def get_console(request, console_compute_name):
     cmd = ['/usr/bin/sudo',
            '-u',
            'nucleus_comet',
-           '/home/nucleus_comet/bin/set_vnc_passwd.py',
+           '/opt/nucleus_scripts/bin/set_vnc_passwd.py',
            '-G',
            '{guest}'.format(guest=console_compute_name),
            '-s',
@@ -212,7 +212,7 @@ def get_console(request, console_compute_name):
     cmd = ['/usr/bin/sudo',
            '-u',
            'nucleus_comet',
-           '/home/nucleus_comet/bin/get_vnc_params.py',
+           '/opt/nucleus_scripts/bin/get_vnc_params.py',
            '-G',
            '{guest}'.format(guest=console_compute_name)]
     try:
@@ -236,7 +236,7 @@ def get_console(request, console_compute_name):
     cmd = ['/usr/bin/sudo',
            '-u',
            'nucleus_comet',
-           '/home/nucleus_comet/bin/open_tunnel.py',
+           '/opt/nucleus_scripts/bin/open_tunnel.py',
            '-H',
            '{hostname}'.format(hostname=phys_host),
            '-p',
