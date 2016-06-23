@@ -30,6 +30,12 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!! ONLY ENABLE IF USING BEHIND SECURE PROXY
+# See https://docs.djangoproject.com/en/1.9/ref/settings/#secure-proxy-ssl-header warning
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CSRF_COOKIE_AGE = 600
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True
