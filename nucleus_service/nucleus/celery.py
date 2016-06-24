@@ -18,4 +18,7 @@ app.autodiscover_tasks(['api'], force=True)
 app.conf.update(CELERY_ACCEPT_CONTENT=['application/json', 'json'])
 app.conf.update(CELERY_TASK_SERIALIZER='auth')
 app.conf.update(CELERY_RESULT_SERIALIZER='json')
-setup_security(allowed_serializers=['application/json', 'json'])
+
+# This check is for roll installation: if certs are not there, settings won't work
+if(os.path.isdir('/var/secrets/cometvc')):
+    setup_security(allowed_serializers=['application/json', 'json'])
