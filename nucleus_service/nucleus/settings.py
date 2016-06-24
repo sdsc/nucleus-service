@@ -137,6 +137,8 @@ CELERY_SECURITY_KEY = '/var/secrets/cometvc/key.pem'
 CELERY_SECURITY_CERTIFICATE = '/var/secrets/cometvc/cert.pem'
 CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/pub/*.pem'
 
+BROKER_LOGIN_METHOD = 'EXTERNAL'
+
 CELERY_ROUTES = (
     {'api.tasks.submit_computeset':
      {'routing_key': 'frontend'}
