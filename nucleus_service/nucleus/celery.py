@@ -10,12 +10,12 @@ from nucleus import settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nucleus.settings')
 os.environ.setdefault('C_FORCE_ROOT', '1')
 
-app = Celery('nucleus', broker='amqp://celery:nimda_celery@comet-fe1/celery')
+app = Celery('nucleus', broker='pyamqp://comet-sfe2/nucleus')
 
-setup_security();
 app.config_from_object(settings)
 app.autodiscover_tasks(['api'], force=True)
 
-app.conf.update(CELERY_ACCEPT_CONTENT=['json'])
-app.conf.update(CELERY_TASK_SERIALIZER='json')
+app.conf.update(CELERY_ACCEPT_CONTENT=['application/json', 'json'])
+app.conf.update(CELERY_TASK_SERIALIZER='auth')
 app.conf.update(CELERY_RESULT_SERIALIZER='json')
+setup_security(allowed_serializers=['application/json', 'json'])

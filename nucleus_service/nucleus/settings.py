@@ -135,7 +135,7 @@ CELERY_TASK_SERIALIZER = 'auth'
 
 CELERY_SECURITY_KEY = '/var/secrets/cometvc/key.pem'
 CELERY_SECURITY_CERTIFICATE = '/var/secrets/cometvc/cert.pem'
-CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/*.pem'
+CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/pub/*.pem'
 
 CELERY_ROUTES = (
     {'api.tasks.submit_computeset':
