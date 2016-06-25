@@ -189,54 +189,56 @@ def get_console(request, console_compute_name):
     resp = "Success"
     sleep_time = 15
 
-    # Set random VNC password for guest valid for sleep_time
+    from xml.dom.minidom import parse, parseString
+    import libvirt
+
+    hypervisor = libvirt.open("qemu+tls://%s.comet/system?pkipath=/var/secrets/cometvc" %
+                              "comet-29-69")
+    domU = hypervisor.lookupByName("comet-sdamn")
+
+    # Grab the current XML definition of the domain...
+    flags = libvirt.VIR_DOMAIN_XML_SECURE
+    domU_xml = parseString(domU.XMLDesc(flags))
+
+    # Parse out the <graphics>...</graphics> device node...
+    for gd in domU_xml.getElementsByTagName('graphics'):
+        xml = gd.toxml()
+
+    duration = 3600
+    password = ''.join(
+        random.SystemRandom().choice(
+            string.ascii_uppercase +
+            string.ascii_lowercase +
+            string.digits) for _ in range(16))
+
+    # Generate a new passwdValidTo string...
+    dt1 = datetime.datetime.utcnow()
+    dt2 = dt1 + datetime.timedelta(0, int(duration))
+    timestr = dt2.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Modify the passwd and passwdValidUntil fields...
+    #if password.lower() == 'none':
+    #    if gd.hasAttribute('passwd'):
+    #        gd.removeAttribute('passwd')
+    #    if gd.hasAttribute('passwdValidTo'):
+    #        gd.removeAttribute('passwdValidTo')
+    #else:
+    gd.setAttribute('passwd', password)
+    gd.setAttribute('passwdValidTo', timestr)
+
+    port = gd.getAttribute("port")
+
+    phys_host = "comet-29-69"
+
+    # Apply the change to the domain...
+    flags = libvirt.VIR_DOMAIN_DEVICE_MODIFY_FORCE | \
+        libvirt.VIR_DOMAIN_DEVICE_MODIFY_LIVE
+    retval = domU.updateDeviceFlags(gd.toxml(), flags)
+
     cmd = ['/usr/bin/sudo',
            '-u',
            'nucleus_comet',
-           '/opt/nucleus_scripts/bin/set_vnc_passwd.py',
-           '-G',
-           '{guest}'.format(guest=console_compute_name),
-           '-s',
-           '{duration}'.format(duration=sleep_time)]
-    try:
-        retcode = subprocess.call(cmd)
-        if retcode < 0:
-            resp = "Child was terminated by signal %d" % (-retcode)
-            return Response(resp)
-
-    except OSError as e:
-        resp = "Execution failed: %s" % (e)
-        return Response(resp)
-
-    # Get VNC connection params...
-    cmd = ['/usr/bin/sudo',
-           '-u',
-           'nucleus_comet',
-           '/opt/nucleus_scripts/bin/get_vnc_params.py',
-           '-G',
-           '{guest}'.format(guest=console_compute_name)]
-    try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-
-    except OSError as e:
-        resp = "Execution failed: %s" % (e)
-        return Response(resp)
-
-    params = ''
-    for line in iter(proc.stdout.readline, ''):
-        import re
-        params += line.rstrip().strip()
-
-    vnc_conn = json.loads(params)[0]["vnc"][0]
-    # return Response(params)
-    (phys_host, passwd, port) = (vnc_conn[
-        "phys-host"], vnc_conn["password"], vnc_conn["port"])
-
-    # Open tunnel from localhost -> phys-host:port...
-    cmd = ['/usr/bin/sudo',
-           '-u',
-           'nucleus_comet',
-           '/opt/nucleus_scripts/bin/open_tunnel.py',
+           '/opt/nucleus-scripts/bin/open_tunnel.py',
            '-H',
            '{hostname}'.format(hostname=phys_host),
            '-p',
@@ -254,13 +256,15 @@ def get_console(request, console_compute_name):
     tun_port = ''
 
     tun_port = proc.stdout.readline().strip()
-    url_base = "/nucleus-guacamole/index.html?hostname=localhost"
-    url = request.build_absolute_uri("%s&port=%s&password=%s" % (url_base, tun_port, passwd))
+    url_base = "/nucleus-guacamole-0.9.8/index.html?hostname=localhost"
+    url = request.build_absolute_uri("%s&port=%s&password=%s" % (url_base, tun_port, password))
 
-    response = Response(
-        url,
-        status=303,
-        headers={'Location': url})
+    response = Response("%s"%(url))
+    #response = Response("%s %s"%())
+    #response = Response(
+    #    url,
+    #    status=303,
+    #    headers={'Location': url})
     return response
 
 
