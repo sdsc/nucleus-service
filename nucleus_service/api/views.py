@@ -22,8 +22,7 @@ from serializers import ComputeSerializer, ComputeSetSerializer, FullComputeSetS
 from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer
 from serializers import UserDetailsSerializer
 
-import re, os
-import random, string, datetime
+import re, os, random, string, datetime
 
 # #################################################
 #  CLUSTER
@@ -193,9 +192,17 @@ def get_console(request, console_compute_name):
     from xml.dom.minidom import parse, parseString
     import libvirt
 
+    compute = Compute.objects.get(rocks_name=console_compute_name)
+
+    physical_host = compute.physical_host
+
+    if(not physical_host):
+        return Response("The VM is not running",
+                        status=status.HTTP_400_BAD_REQUEST)
+
     hypervisor = libvirt.open("qemu+tls://%s.comet/system?pkipath=/var/secrets/cometvc" %
-                              "comet-29-69")
-    domU = hypervisor.lookupByName("comet-sdamn")
+                              physical_host)
+    domU = hypervisor.lookupByName(compute.name)
 
     # Grab the current XML definition of the domain...
     flags = libvirt.VIR_DOMAIN_XML_SECURE
@@ -218,18 +225,10 @@ def get_console(request, console_compute_name):
     timestr = dt2.strftime("%Y-%m-%dT%H:%M:%S")
 
     # Modify the passwd and passwdValidUntil fields...
-    #if password.lower() == 'none':
-    #    if gd.hasAttribute('passwd'):
-    #        gd.removeAttribute('passwd')
-    #    if gd.hasAttribute('passwdValidTo'):
-    #        gd.removeAttribute('passwdValidTo')
-    #else:
     gd.setAttribute('passwd', password)
     gd.setAttribute('passwdValidTo', timestr)
 
     port = gd.getAttribute("port")
-
-    phys_host = "comet-29-69"
 
     # Apply the change to the domain...
     flags = libvirt.VIR_DOMAIN_DEVICE_MODIFY_FORCE | \
@@ -241,7 +240,7 @@ def get_console(request, console_compute_name):
            'nucleus_comet',
            '/opt/nucleus-scripts/bin/open_tunnel.py',
            '-H',
-           '{hostname}'.format(hostname=phys_host),
+           '{hostname}'.format(hostname=physical_host),
            '-p',
            '{hostport}'.format(hostport=port),
            '-s',
@@ -260,14 +259,11 @@ def get_console(request, console_compute_name):
     url_base = "/nucleus-guacamole-0.9.8/index.html?hostname=localhost"
     url = request.build_absolute_uri("%s&port=%s&password=%s" % (url_base, tun_port, password))
 
-    response = Response("%s"%(url))
-    #response = Response("%s %s"%())
-    #response = Response(
-    #    url,
-    #    status=303,
-    #    headers={'Location': url})
+    response = Response(
+        url,
+        status=303,
+        headers={'Location': url})
     return response
-
 
 class ConsoleViewSet(ViewSet):
     """Open VNC console to named compute resource."""

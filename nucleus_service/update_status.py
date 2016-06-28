@@ -8,7 +8,7 @@ from nucleus.celery import *
 
 from api.tasks import update_clusters
 
-NAS = "comet-image-32-6"
+NAS = "comet-image-32-5"
 
 images_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'storagemap', NAS,
                       'json=true'], stdout=PIPE, stderr=PIPE)
@@ -43,6 +43,7 @@ for record in clusters:
             'mem': 0,
             'cpus': 0,
             'disksize': 0,
+            'physhost': None,
             'img_locked': img_states[record['frontend']]['locked'] if img_states.get(record['frontend']) else None,
             'img_state': img_states[record['frontend']]['state'] if img_states.get(record['frontend']) else None,
             'state': record['cluster'][0]['status'],
@@ -54,6 +55,7 @@ for record in clusters:
         res_clust['computes'] = [
             {
                 'name': client['client nodes'],
+                'physhost': None,
                 'interfaces': [],
                 'mem': 0,
                 'cpus': 0,
@@ -101,6 +103,8 @@ for cluster in result:
         (out, err) = vm_req.communicate()
         if out:
             for vm_rec in json.loads(out)[0]["vm"]:
+                if(not cluster.get("physhost")):
+	            cluster["physhost"] = vm_rec["host"]
                 if(vm_rec["mem"]):
                     cluster["mem"] = vm_rec["mem"]
                     cluster["cpus"] = vm_rec["cpus"]
@@ -136,6 +140,8 @@ for cluster in result:
             for vm_rec in json.loads(out):
                 compute = next(compute for compute in cluster['computes'] if compute[
                      'name'] == vm_rec['vm-host'])
+                if(not compute.get("physhost")):
+	            compute["physhost"] = vm_rec["vm"][0]["host"]
                 compute["mem"] = vm_rec["vm"][0]["mem"]
                 compute["cpus"] = vm_rec["vm"][0]["cpus"]
                 compute["disksize"] = vm_rec["vm"][0]["disksize"]

@@ -312,10 +312,15 @@ def update_clusters(clusters_json):
                     frontend.gateway = cluster_rocks["gateway"]
                     frontend.save()
 
+                if frontend.physical_host != cluster_rocks["physhost"]:
+                    frontend.physical_host = cluster_rocks["physhost"]
+                    frontend.save()
+
             except Cluster.DoesNotExist:
                 frontend = Frontend()
                 frontend.name = cluster_rocks["frontend"]
                 frontend.rocks_name = cluster_rocks["frontend"]
+	        frontend.physical_host = cluster_rocks["physhost"]
                 frontend.state = cluster_rocks["state"]
                 frontend.memory = cluster_rocks["mem"]
                 frontend.disksize = cluster_rocks["disksize"]
@@ -349,6 +354,7 @@ def update_clusters(clusters_json):
                     rocks_name=compute_rocks["name"], cluster=cluster_obj)
                 if created:
                     compute_obj.name = compute_rocks["name"]
+                    compute_obj.physical_host = compute_rocks["physhost"]
                     compute_obj.state = compute_rocks["state"]
                     compute_obj.memory = compute_rocks["mem"]
                     compute_obj.disksize = compute_rocks["disksize"]
@@ -370,6 +376,9 @@ def update_clusters(clusters_json):
                         or compute_obj.image_locked != compute_rocks["img_locked"]):
                         compute_obj.image_state = compute_rocks["img_state"]
                         compute_obj.image_locked = compute_rocks["img_locked"]
+                        compute_obj.save()
+                    if compute_obj.physical_host != compute_rocks["physhost"]:
+                        compute_obj.physical_host = compute_rocks["physhost"]
                         compute_obj.save()
 
                 for interface in compute_rocks['interfaces']:
