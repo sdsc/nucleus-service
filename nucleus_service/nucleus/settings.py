@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_pam',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_httpsignature',
@@ -54,6 +55,11 @@ INSTALLED_APPS = (
     'rest_framework_swagger',
     'rest_auth'
 )
+
+AUTHENTICATION_BACKENDS = [
+   'api.auth.NucleusPAMBackend', 
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -63,7 +69,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware'
 )
 
 ROOT_URLCONF = 'nucleus.urls'
