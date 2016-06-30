@@ -23,4 +23,5 @@ urlpatterns = [
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^getkey$', views.getkey),
+    url(r'^getyubikey$', views.getyubikey),
 ]
