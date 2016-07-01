@@ -192,3 +192,5 @@ SWAGGER_SETTINGS = {
     "api_version": '1.0',  # API's version
     "api_path": "/nucleus"  # the path to API (it could not be a root level)
 }
+
+SDSC_ADMINS=['dmishin', 'tcooper', 'rpwagner', 'cirving']

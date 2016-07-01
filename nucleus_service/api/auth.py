@@ -10,6 +10,7 @@ from django_pam.auth.backends import PAMBackend
 import pam as pam_base
 from django.contrib.auth import get_user_model
 import sys
+from django.conf import settings
 
 class NucleusAPISignatureAuthentication(SignatureAuthentication):
     # The HTTP header used to pass the consumer key ID.
@@ -79,6 +80,8 @@ class NucleusPAMBackend(PAMBackend):
         UserModel = get_user_model()
         user = None
 
+        if(not username in settings.SDSC_ADMINS):
+            username = "cometvc_%s"%username
         if self._pam.authenticate(username, password, "nucleus"):
             try:
                 user = UserModel._default_manager.get_by_natural_key(
