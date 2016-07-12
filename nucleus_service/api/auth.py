@@ -80,9 +80,10 @@ class NucleusPAMBackend(PAMBackend):
         UserModel = get_user_model()
         user = None
 
+        rad_username = username
         if(not username in settings.SDSC_ADMINS):
-            username = "cometvc_%s"%username
-        if self._pam.authenticate(username, password, "nucleus"):
+            rad_username = "cometvc_%s"%username
+        if self._pam.authenticate(rad_username, password, "nucleus"):
             try:
                 user = UserModel._default_manager.get_by_natural_key(
                     username=username)
