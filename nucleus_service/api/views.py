@@ -17,7 +17,7 @@ from rest_framework.viewsets import ModelViewSet, ViewSet
 from tasks import poweron_nodes, poweroff_nodes
 from tasks import submit_computeset, cancel_computeset, attach_iso
 import hostlist
-from models import Cluster, Compute, ComputeSet
+from models import Cluster, Compute, ComputeSet, Frontend
 from serializers import ComputeSerializer, ComputeSetSerializer, FullComputeSetSerializer
 from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer
 from serializers import UserDetailsSerializer
@@ -184,7 +184,7 @@ class ComputeViewSet(ViewSet):
 #  CONSOLE
 ##################################################
 
-def get_console(request, console_compute_name):
+def get_console(request, console_compute_name, is_frontend=False):
     """Open VNC console to named resource."""
     resp = "Success"
     sleep_time = 15
@@ -192,7 +192,10 @@ def get_console(request, console_compute_name):
     from xml.dom.minidom import parse, parseString
     import libvirt
 
-    compute = Compute.objects.get(rocks_name=console_compute_name)
+    if(is_frontend):
+        compute = Frontend.objects.get(rocks_name=console_compute_name)
+    else:
+        compute = Compute.objects.get(rocks_name=console_compute_name)
 
     physical_host = compute.physical_host
 
@@ -283,7 +286,7 @@ class FrontendConsoleViewSet(ViewSet):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if not clust.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(request, clust.frontend.rocks_name)
+        return get_console(request, clust.frontend.rocks_name, True)
 
 
 ##################################################
