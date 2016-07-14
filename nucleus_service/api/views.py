@@ -611,7 +611,6 @@ class FrontendViewSet(ViewSet):
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if not clust.project in request.user.groups.all():
             raise PermissionDenied()
-        poweron_nodes.delay([clust.frontend.rocks_name])
         if not "iso_name" in request.GET:
             return Response("Please provide the iso_name", status=400)
         attach_iso.delay([clust.frontend.rocks_name], request.GET["iso_name"])
