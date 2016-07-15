@@ -15,5 +15,5 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "nucleus.settings"
 
 application = get_wsgi_application()
 
-import nucleus.monitor
-nucleus.monitor.start(interval=1.0)
+# import nucleus.monitor
+# nucleus.monitor.start(interval=1.0)
