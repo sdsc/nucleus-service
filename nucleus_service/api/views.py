@@ -23,6 +23,7 @@ from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer
 from serializers import UserDetailsSerializer
 
 import re, os, random, string, datetime
+from django.db.models import Q
 
 # #################################################
 #  CLUSTER
@@ -362,7 +363,7 @@ class ComputeSetViewSet(ModelViewSet):
                         ComputeSet.CSET_STATE_SUBMITTED, 
                         ComputeSet.CSET_STATE_RUNNING, 
                         ComputeSet.CSET_STATE_ENDING]
-                ).exclude(state="active").filter(image_state__in=["unmapped",None]).exclude(image_locked=True)[:int(request.data["count"])]
+                ).exclude(state="active").filter(Q(image_state="unmapped") | Q(image_state__isnull=True)).exclude(image_locked=True)[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
             if(len(nodes) < int(request.data["count"]) or int(request.data["count"]) == 0):
                 return Response("There are %i nodes available for starting. Requested number should be greater than zero."%len(nodes),
