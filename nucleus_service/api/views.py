@@ -185,7 +185,7 @@ class ComputeViewSet(ViewSet):
 #  CONSOLE
 ##################################################
 
-def get_console(request, console_compute_name, is_frontend=False):
+def get_console(request, console_compute_name, nucleus_name=None, is_frontend=False):
     """Open VNC console to named resource."""
     resp = "Success"
     sleep_time = 15
@@ -261,7 +261,7 @@ def get_console(request, console_compute_name, is_frontend=False):
 
     tun_port = proc.stdout.readline().strip()
     url_base = "/nucleus-guacamole-0.9.8/index.html?hostname=localhost"
-    url = request.build_absolute_uri("%s&port=%s&token=%s&host=%s" % (url_base, tun_port, passwd, console_compute_name))
+    url = request.build_absolute_uri("%s&port=%s&token=%s&host=%s" % (url_base, tun_port, passwd, nucleus_name))
     response = Response(
         url,
         status=303,
@@ -276,7 +276,7 @@ class ConsoleViewSet(ViewSet):
             Compute, name=console_compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(request, compute.rocks_name)
+        return get_console(request, compute.rocks_name, console_compute_name)
 
 
 class FrontendConsoleViewSet(ViewSet):
@@ -286,7 +286,7 @@ class FrontendConsoleViewSet(ViewSet):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if not clust.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(request, clust.frontend.rocks_name, True)
+        return get_console(request, clust.frontend.rocks_name, console_cluster_name, True)
 
 
 ##################################################
