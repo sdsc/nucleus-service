@@ -23,7 +23,8 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        '': ['README.md'],
+	 '': ['README.md'],
+	 'nucleus_service': ['nucleus/templates/getkey.html']
     },
     url='https://github.com/sdsc/nucleus',
     license='Apache-2.0',
