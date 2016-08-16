@@ -270,6 +270,8 @@ def get_console(request, console_compute_name, nucleus_name=None, is_frontend=Fa
 
 class ConsoleViewSet(ViewSet):
     """Open VNC console to named compute resource."""
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
         compute = get_object_or_404(
@@ -281,7 +283,9 @@ class ConsoleViewSet(ViewSet):
 
 class FrontendConsoleViewSet(ViewSet):
     """Open VNC console to name frontend resource."""
-
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    
     def retrieve(self, request, console_cluster_name, format=None):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if not clust.project in request.user.groups.all():
