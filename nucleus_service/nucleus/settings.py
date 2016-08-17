@@ -64,7 +64,7 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = [
    'api.auth.NucleusPAMBackend', 
-    'django.contrib.auth.backends.ModelBackend',
+   #'django.contrib.auth.backends.ModelBackend',
 ]
 
 MIDDLEWARE_CLASSES = (
