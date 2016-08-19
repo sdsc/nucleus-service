@@ -340,8 +340,8 @@ def update_clusters(clusters_json):
                         frontend=frontend, iface=interface["iface"], defaults={
                             'ip': interface["ip"],
                             'netmask': interface["netmask"],
-                            'mac': interface["mac"], 
-                            'iface': interface["iface"], 
+                            'mac': interface["mac"],
+                            'iface': interface["iface"],
                             'subnet': interface["subnet"]})
 
             for compute_rocks in cluster_rocks["computes"]:
@@ -374,12 +374,12 @@ def update_clusters(clusters_json):
 
                 for interface in compute_rocks['interfaces']:
                     if interface["mac"]:
-                        ComputeInterface.objects.update_or_create(compute=compute_obj, iface=interface["iface"], 
-                            defaults={ 
-                                'ip': interface["ip"], 
-                                'netmask': interface["netmask"], 
-                                'mac': interface["mac"], 
-                                'iface': interface["iface"], 
+                        ComputeInterface.objects.update_or_create(compute=compute_obj, iface=interface["iface"],
+                            defaults={
+                                'ip': interface["ip"],
+                                'netmask': interface["netmask"],
+                                'mac': interface["mac"],
+                                'iface': interface["iface"],
                                 'subnet': interface["subnet"]})
         except:
             traceback.print_exc()
