@@ -12,10 +12,10 @@ ISOS_DIR = "/mnt/images"
 
 @shared_task(ignore_result=True)
 def submit_computeset(cset):
-    """ This task runs on comet-fe1 therefore database updates can ONLY occur
-        using update_computeset() which will run on comet-nucleus.
-        In addition, since django.db modules are not installed on comet-fe1
-        we need to use json module to deserialize/serialize JSON.
+    """ This task runs on the cluster frontend therefore database updates can
+        ONLY occur using update_computeset() which will run on comet-nucleus.
+        In addition, since django.db modules are not installed on the cluster
+        frontend we need to use json module to deserialize/serialize JSON.
     """
     import uuid
 
