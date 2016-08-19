@@ -10,7 +10,7 @@ from nucleus import settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nucleus.settings')
 os.environ.setdefault('C_FORCE_ROOT', '1')
 
-app = Celery('nucleus', broker='amqp://celery:nimda_celery@comet-fe1/celery')
+app = Celery('nucleus', broker='pyamqp://comet-fe5/nucleus')
 
 setup_security();
 app.config_from_object(settings)
