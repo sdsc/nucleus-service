@@ -12,10 +12,10 @@ ISOS_DIR = "/mnt/images"
 
 @shared_task(ignore_result=True)
 def submit_computeset(cset):
-    """ This task runs on comet-fe1 therefore database updates can ONLY occur
-        using update_computeset() which will run on comet-nucleus.
-        In addition, since django.db modules are not installed on comet-fe1
-        we need to use json module to deserialize/serialize JSON.
+    """ This task runs on the cluster frontend therefore database updates can
+        ONLY occur using update_computeset() which will run on comet-nucleus.
+        In addition, since django.db modules are not installed on the cluster
+        frontend we need to use json module to deserialize/serialize JSON.
     """
     import uuid
 
@@ -340,8 +340,8 @@ def update_clusters(clusters_json):
                         frontend=frontend, iface=interface["iface"], defaults={
                             'ip': interface["ip"],
                             'netmask': interface["netmask"],
-                            'mac': interface["mac"], 
-                            'iface': interface["iface"], 
+                            'mac': interface["mac"],
+                            'iface': interface["iface"],
                             'subnet': interface["subnet"]})
 
             for compute_rocks in cluster_rocks["computes"]:
@@ -374,12 +374,12 @@ def update_clusters(clusters_json):
 
                 for interface in compute_rocks['interfaces']:
                     if interface["mac"]:
-                        ComputeInterface.objects.update_or_create(compute=compute_obj, iface=interface["iface"], 
-                            defaults={ 
-                                'ip': interface["ip"], 
-                                'netmask': interface["netmask"], 
-                                'mac': interface["mac"], 
-                                'iface': interface["iface"], 
+                        ComputeInterface.objects.update_or_create(compute=compute_obj, iface=interface["iface"],
+                            defaults={
+                                'ip': interface["ip"],
+                                'netmask': interface["netmask"],
+                                'mac': interface["mac"],
+                                'iface': interface["iface"],
                                 'subnet': interface["subnet"]})
         except:
             traceback.print_exc()
