@@ -21,10 +21,11 @@ HOME_DIR = os.getenv("HOME")
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'qy4-11q&&19jaz!dwn7mk6r#zh+=iiprtzxn^@698$t*e(+f%#'
+with open('/var/secrets/cometvc/django_secret') as f:
+    SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = []
 #DEBUG_PROPAGATE_EXCEPTIONS = True
 
@@ -35,6 +36,11 @@ ALLOWED_HOSTS = []
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SECURE_HSTS_SECONDS=31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+SECURE_BROWSER_XSS_FILTER=True
+SESSION_COOKIE_SECURE=True
 
 CSRF_COOKIE_AGE = 600
 CSRF_COOKIE_HTTPONLY = True
@@ -47,6 +53,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_pam',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_httpsignature',
@@ -54,6 +61,11 @@ INSTALLED_APPS = (
     'rest_framework_swagger',
     'rest_auth'
 )
+
+AUTHENTICATION_BACKENDS = [
+   'api.auth.NucleusPAMBackend', 
+   #'django.contrib.auth.backends.ModelBackend',
+]
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -63,7 +75,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware'
 )
 
 ROOT_URLCONF = 'nucleus.urls'
@@ -135,7 +147,9 @@ CELERY_TASK_SERIALIZER = 'auth'
 
 CELERY_SECURITY_KEY = '/var/secrets/cometvc/key.pem'
 CELERY_SECURITY_CERTIFICATE = '/var/secrets/cometvc/cert.pem'
-CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/*.pem'
+CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/pub/*.pem'
+
+BROKER_LOGIN_METHOD = 'EXTERNAL'
 
 CELERY_ROUTES = (
     {'api.tasks.submit_computeset':
@@ -184,3 +198,5 @@ SWAGGER_SETTINGS = {
     "api_version": '1.0',  # API's version
     "api_path": "/nucleus"  # the path to API (it could not be a root level)
 }
+
+SDSC_ADMINS=['dmishin', 'tcooper', 'rpwagner', 'cirving']

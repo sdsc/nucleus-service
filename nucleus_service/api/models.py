@@ -10,6 +10,7 @@ class Frontend(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=100)
     rocks_name = models.CharField(max_length=100, unique=True)
+    physical_host = models.CharField(max_length=100, null=True)
     cpus = models.IntegerField(null=True)
     memory = models.IntegerField(null=True)
     disksize = models.IntegerField(null=True)
@@ -65,6 +66,7 @@ class Allocation(models.Model):
 class Compute(models.Model):
     name = models.CharField(max_length=128)
     rocks_name = models.CharField(max_length=128, unique=True)
+    physical_host = models.CharField(max_length=100, null=True)
     cluster = models.ForeignKey(Cluster, related_name='computes', on_delete=models.CASCADE)
     host = models.CharField(max_length=128, null=True)
     cpus = models.IntegerField(null=True)

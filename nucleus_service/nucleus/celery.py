@@ -12,10 +12,16 @@ os.environ.setdefault('C_FORCE_ROOT', '1')
 
 app = Celery('nucleus', broker='pyamqp://comet-fe5/nucleus')
 
-setup_security();
 app.config_from_object(settings)
 app.autodiscover_tasks(['api'], force=True)
 
-app.conf.update(CELERY_ACCEPT_CONTENT=['json'])
-app.conf.update(CELERY_TASK_SERIALIZER='json')
+app.conf.update(CELERY_ACCEPT_CONTENT=['application/json', 'json'])
+app.conf.update(CELERY_TASK_SERIALIZER='auth')
 app.conf.update(CELERY_RESULT_SERIALIZER='json')
+
+# This check is for roll installation: if certs are not there, settings won't work
+if(os.path.isfile('/var/secrets/cometvc/key.pem') and
+	os.path.isfile('/var/secrets/cometvc/cert.pem') and
+	os.path.isfile('/var/secrets/cometvc/ca.pem')
+	):
+    setup_security(allowed_serializers=['application/json', 'json'])

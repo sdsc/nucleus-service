@@ -5,6 +5,10 @@ from decorators import basicauth
 import json
 from api.models import NucleusUser
 from django.utils.crypto import get_random_string
+from rest_framework import status
+
+import pam as pam_base
+from django.contrib.auth import get_user_model
 
 @basicauth
 def getkey(request):
@@ -29,3 +33,4 @@ def getkey(request):
         return HttpResponse(json.dumps(return_struct), content_type=mime_req)
     else:
         return HttpResponse("Unsupported Accept header %s"%mime_req, status=415)
+

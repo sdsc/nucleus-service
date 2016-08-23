@@ -1,11 +1,16 @@
 import time
-import traceback
 
 from django.contrib.auth.models import User
 from rest_framework_httpsignature.authentication import SignatureAuthentication
 from rest_framework import exceptions
 
 from api.models import Nonce
+
+from django_pam.auth.backends import PAMBackend
+import pam as pam_base
+from django.contrib.auth import get_user_model
+import sys
+from django.conf import settings
 
 class NucleusAPISignatureAuthentication(SignatureAuthentication):
     # The HTTP header used to pass the consumer key ID.
@@ -50,3 +55,41 @@ class NucleusAPISignatureAuthentication(SignatureAuthentication):
             raise exceptions.AuthenticationFailed('Nonce check failed')
 
         return SignatureAuthentication.authenticate(self, request)
+
+
+
+class NucleusPAMBackend(PAMBackend):
+    """
+    An implementation of a PAM backend authentication module.
+    """
+    _pam = pam_base.pam()
+
+    def authenticate(self, username=None, password=None, service=None, **extra_fields):
+        """
+        Authenticate using PAM then get the account if it exists else create
+        a new account.
+        :param username: The users username. This is a manditory field.
+        :type username: str
+        :param password: The users password. This is a manditory field.
+        :type password: str
+        :param extra_fields: Additonal keyword options of any editable field
+                             in the user model.
+        :type extra_fields: dict
+        :rtype: The Django user object.
+        """
+        UserModel = get_user_model()
+        user = None
+
+        rad_username = username
+        if(not username in settings.SDSC_ADMINS):
+            rad_username = "cometvc_%s"%username
+        if self._pam.authenticate(rad_username, password, "nucleus"):
+            try:
+                user = UserModel._default_manager.get_by_natural_key(
+                    username=username)
+            except UserModel.DoesNotExist:
+                print "User %s not found in the database"%username
+            except:
+                print "Unexpected error:", sys.exc_info()[1]
+
+        return user

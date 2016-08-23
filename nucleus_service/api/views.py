@@ -17,12 +17,13 @@ from rest_framework.viewsets import ModelViewSet, ViewSet
 from tasks import poweron_nodes, poweroff_nodes
 from tasks import submit_computeset, cancel_computeset, attach_iso
 import hostlist
-from models import Cluster, Compute, ComputeSet
+from models import Cluster, Compute, ComputeSet, Frontend
 from serializers import ComputeSerializer, ComputeSetSerializer, FullComputeSetSerializer
 from serializers import ClusterSerializer, FrontendSerializer, ProjectSerializer
 from serializers import UserDetailsSerializer
 
-import re, os
+import re, os, random, string, datetime
+from django.db.models import Q
 
 # #################################################
 #  CLUSTER
@@ -184,61 +185,66 @@ class ComputeViewSet(ViewSet):
 #  CONSOLE
 ##################################################
 
-def get_console(request, console_compute_name):
+def get_console(request, console_compute_name, nucleus_name=None, is_frontend=False):
     """Open VNC console to named resource."""
     resp = "Success"
     sleep_time = 15
 
-    # Set random VNC password for guest valid for sleep_time
+    from xml.dom.minidom import parse, parseString
+    import libvirt
+
+    if(is_frontend):
+        compute = Frontend.objects.get(rocks_name=console_compute_name)
+    else:
+        compute = Compute.objects.get(rocks_name=console_compute_name)
+
+    physical_host = compute.physical_host
+
+    if(not physical_host):
+        return Response("The VM is not running",
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    hypervisor = libvirt.open("qemu+tls://%s.comet/system?pkipath=/var/secrets/cometvc" %
+                              physical_host)
+    domU = hypervisor.lookupByName(compute.name)
+
+    # Grab the current XML definition of the domain...
+    flags = libvirt.VIR_DOMAIN_XML_SECURE
+    domU_xml = parseString(domU.XMLDesc(flags))
+
+    # Parse out the <graphics>...</graphics> device node...
+    for gd in domU_xml.getElementsByTagName('graphics'):
+        xml = gd.toxml()
+
+    duration = 3600
+    password = ''.join(
+        random.SystemRandom().choice(
+            string.ascii_uppercase +
+            string.ascii_lowercase +
+            string.digits) for _ in range(16))
+
+    # Generate a new passwdValidTo string...
+    dt1 = datetime.datetime.utcnow()
+    dt2 = dt1 + datetime.timedelta(0, int(duration))
+    timestr = dt2.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Modify the passwd and passwdValidUntil fields...
+    gd.setAttribute('passwd', password)
+    gd.setAttribute('passwdValidTo', timestr)
+
+    port = gd.getAttribute("port")
+
+    # Apply the change to the domain...
+    flags = libvirt.VIR_DOMAIN_DEVICE_MODIFY_FORCE | \
+        libvirt.VIR_DOMAIN_DEVICE_MODIFY_LIVE
+    retval = domU.updateDeviceFlags(gd.toxml(), flags)
+
     cmd = ['/usr/bin/sudo',
            '-u',
            'nucleus_comet',
-           '/home/nucleus_comet/bin/set_vnc_passwd.py',
-           '-G',
-           '{guest}'.format(guest=console_compute_name),
-           '-s',
-           '{duration}'.format(duration=sleep_time)]
-    try:
-        retcode = subprocess.call(cmd)
-        if retcode < 0:
-            resp = "Child was terminated by signal %d" % (-retcode)
-            return Response(resp)
-
-    except OSError as e:
-        resp = "Execution failed: %s" % (e)
-        return Response(resp)
-
-    # Get VNC connection params...
-    cmd = ['/usr/bin/sudo',
-           '-u',
-           'nucleus_comet',
-           '/home/nucleus_comet/bin/get_vnc_params.py',
-           '-G',
-           '{guest}'.format(guest=console_compute_name)]
-    try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-
-    except OSError as e:
-        resp = "Execution failed: %s" % (e)
-        return Response(resp)
-
-    params = ''
-    for line in iter(proc.stdout.readline, ''):
-        import re
-        params += line.rstrip().strip()
-
-    vnc_conn = json.loads(params)[0]["vnc"][0]
-    # return Response(params)
-    (phys_host, passwd, port) = (vnc_conn[
-        "phys-host"], vnc_conn["password"], vnc_conn["port"])
-
-    # Open tunnel from localhost -> phys-host:port...
-    cmd = ['/usr/bin/sudo',
-           '-u',
-           'nucleus_comet',
-           '/home/nucleus_comet/bin/open_tunnel.py',
+           '/opt/nucleus-scripts/bin/open_tunnel.py',
            '-H',
-           '{hostname}'.format(hostname=phys_host),
+           '{hostname}'.format(hostname=physical_host),
            '-p',
            '{hostport}'.format(hostport=port),
            '-s',
@@ -254,35 +260,37 @@ def get_console(request, console_compute_name):
     tun_port = ''
 
     tun_port = proc.stdout.readline().strip()
-    url_base = "/nucleus-guacamole/index.html?hostname=localhost"
-    url = request.build_absolute_uri("%s&port=%s&password=%s" % (url_base, tun_port, passwd))
-
+    url_base = "/nucleus-guacamole-0.9.8/index.html?hostname=localhost"
+    url = request.build_absolute_uri("%s&port=%s&token=%s&host=%s" % (url_base, tun_port, passwd, nucleus_name))
     response = Response(
         url,
         status=303,
         headers={'Location': url})
     return response
 
-
 class ConsoleViewSet(ViewSet):
     """Open VNC console to named compute resource."""
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def retrieve(self, request, compute_name_cluster_name, console_compute_name, format=None):
         compute = get_object_or_404(
             Compute, name=console_compute_name, cluster__name=compute_name_cluster_name)
         if not compute.cluster.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(request, compute.rocks_name)
+        return get_console(request, compute.rocks_name, console_compute_name)
 
 
 class FrontendConsoleViewSet(ViewSet):
     """Open VNC console to name frontend resource."""
-
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    
     def retrieve(self, request, console_cluster_name, format=None):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if not clust.project in request.user.groups.all():
             raise PermissionDenied()
-        return get_console(request, clust.frontend.rocks_name)
+        return get_console(request, clust.frontend.rocks_name, console_cluster_name, True)
 
 
 ##################################################
@@ -358,7 +366,7 @@ class ComputeSetViewSet(ModelViewSet):
                         ComputeSet.CSET_STATE_SUBMITTED, 
                         ComputeSet.CSET_STATE_RUNNING, 
                         ComputeSet.CSET_STATE_ENDING]
-                ).exclude(state="active").filter(image_state__in=["unmapped",None]).exclude(image_locked=True)[:int(request.data["count"])]
+                ).exclude(state="active").filter(Q(image_state="unmapped") | Q(image_state__isnull=True)).exclude(image_locked=True)[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
             if(len(nodes) < int(request.data["count"]) or int(request.data["count"]) == 0):
                 return Response("There are %i nodes available for starting. Requested number should be greater than zero."%len(nodes),
@@ -607,7 +615,6 @@ class FrontendViewSet(ViewSet):
         clust = get_object_or_404(Cluster, name=frontend_cluster_name)
         if not clust.project in request.user.groups.all():
             raise PermissionDenied()
-        poweron_nodes.delay([clust.frontend.rocks_name])
         if not "iso_name" in request.GET:
             return Response("Please provide the iso_name", status=400)
         attach_iso.delay([clust.frontend.rocks_name], request.GET["iso_name"])
