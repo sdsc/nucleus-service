@@ -25,6 +25,9 @@ from serializers import UserDetailsSerializer
 import re, os, random, string, datetime
 from django.db.models import Q
 
+from rest_framework.authentication import BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+
 # #################################################
 #  CLUSTER
 # #################################################
