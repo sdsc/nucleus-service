@@ -89,7 +89,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
             return Response("Compute is not a member of an active computeset",
                             status=status.HTTP_400_BAD_REQUEST)
-            
+
         poweroff_nodes.delay([compute.rocks_name], "shutdown")
         return Response(status=204)
 
@@ -104,7 +104,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
             return Response("Compute is not a member of an active computeset",
                             status=status.HTTP_400_BAD_REQUEST)
-            
+
         poweroff_nodes.delay([compute.rocks_name], "reboot")
         return Response(status=204)
 
@@ -119,7 +119,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
             return Response("Compute is not a member of an active computeset",
                             status=status.HTTP_400_BAD_REQUEST)
-            
+
         poweroff_nodes.delay([compute.rocks_name], "reset")
         return Response(status=204)
 
@@ -134,7 +134,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
             return Response("Compute is not a member of an active computeset",
                             status=status.HTTP_400_BAD_REQUEST)
-            
+
         poweroff_nodes.delay([compute.rocks_name], "poweroff")
         return Response(status=204)
 
@@ -149,7 +149,7 @@ class ComputeViewSet(ViewSet):
         if(not compute.computeset.filter(state=ComputeSet.CSET_STATE_RUNNING).exists()):
             return Response("Compute is not a member of an active computeset",
                             status=status.HTTP_400_BAD_REQUEST)
-            
+
         poweron_nodes.delay([compute.rocks_name])
         return Response(status=204)
 
@@ -178,7 +178,7 @@ class ComputeViewSet(ViewSet):
         if(not re.match('^[a-zA-Z0-9_-]+$',new_name)):
             return Response("New name can opnly contain alphanumeric symbols, digits and '-_'.",
                             status=status.HTTP_400_BAD_REQUEST)
-            
+
         compute.name = new_name
         compute.save()
         return Response(status=204)
@@ -288,7 +288,7 @@ class FrontendConsoleViewSet(ViewSet):
     """Open VNC console to name frontend resource."""
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
-    
+
     def retrieve(self, request, console_cluster_name, format=None):
         clust = get_object_or_404(Cluster, name=console_cluster_name)
         if not clust.project in request.user.groups.all():
@@ -365,9 +365,9 @@ class ComputeSetViewSet(ModelViewSet):
         elif request.data.get("count"):
             computes_selected = Compute.objects.filter(cluster=clust).exclude(
                     computeset__state__in=[
-                        ComputeSet.CSET_STATE_CREATED, 
-                        ComputeSet.CSET_STATE_SUBMITTED, 
-                        ComputeSet.CSET_STATE_RUNNING, 
+                        ComputeSet.CSET_STATE_CREATED,
+                        ComputeSet.CSET_STATE_SUBMITTED,
+                        ComputeSet.CSET_STATE_RUNNING,
                         ComputeSet.CSET_STATE_ENDING]
                 ).exclude(state="active").filter(Q(image_state="unmapped") | Q(image_state__isnull=True)).exclude(image_locked=True)[:int(request.data["count"])]
             nodes.extend([comp.name for comp in computes_selected])
