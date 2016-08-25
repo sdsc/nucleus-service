@@ -264,7 +264,7 @@ def get_console(request, console_compute_name, nucleus_name=None, is_frontend=Fa
 
     tun_port = proc.stdout.readline().strip()
     url_base = "/nucleus-guacamole-0.9.8/index.html?hostname=localhost"
-    url = request.build_absolute_uri("%s&port=%s&token=%s&host=%s" % (url_base, tun_port, passwd, nucleus_name))
+    url = request.build_absolute_uri("%s&port=%s&token=%s&host=%s" % (url_base, tun_port, password, nucleus_name))
     response = Response(
         url,
         status=303,
