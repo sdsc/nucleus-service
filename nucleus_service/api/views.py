@@ -434,7 +434,7 @@ class ComputeSetViewSet(ModelViewSet):
         response = Response(
             serializer.data,
             status=201,
-            headers={'Location': location})
+            headers={'Location': request.build_absolute_uri(location)})
 
         return response
 
@@ -467,7 +467,7 @@ class ComputeSetViewSet(ModelViewSet):
         response = Response(
             serializer.data,
             status=201,
-            headers={'Location': location})
+            headers={'Location': request.build_absolute_uri(location)})
 
         return response
 
@@ -500,7 +500,7 @@ class ComputeSetViewSet(ModelViewSet):
         response = Response(
             serializer.data,
             status=201,
-            headers={'Location': location})
+            headers={'Location': request.build_absolute_uri(location)})
 
         return response
 
