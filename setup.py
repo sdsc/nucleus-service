@@ -24,7 +24,7 @@ setup(
     include_package_data=True,
     package_data={
 	 '': ['README.md'],
-	 'nucleus_service': ['nucleus/templates/getkey.html']
+	 'nucleus_service': ['nucleus/templates/getkey.html', 'computeset_job_notify.sh']
     },
     url='https://github.com/sdsc/nucleus',
     license='Apache-2.0',
