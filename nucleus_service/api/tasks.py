@@ -36,9 +36,7 @@ def submit_computeset(cset):
     #
     # All other parameters should be considered UNCHANGABLE.
 
-    cmd = ['/usr/bin/timeout',
-           '2',
-           '/usr/bin/sbatch',
+    cmd = ['/usr/bin/sbatch',
            '--job-name=%s' % (cset['name']),
            '--output=%s.out' % (cset['name']),
            '--uid=%s' % (cset['user']),
@@ -69,11 +67,7 @@ def submit_computeset(cset):
 
     except CalledProcessError as e:
         cset["state"] = "failed"
-        if e.returncode == 124:
-            msg = "CalledProcessError: Timeout during request: %s" % (
-                e.output.strip().rstrip())
-        else:
-            msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
+        msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
