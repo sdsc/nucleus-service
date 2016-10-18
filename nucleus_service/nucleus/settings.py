@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import ssl
+import os.path
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOME_DIR = os.getenv("HOME")
@@ -21,8 +22,10 @@ HOME_DIR = os.getenv("HOME")
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-with open('/var/secrets/cometvc/django_secret') as f:
-    SECRET_KEY = f.read().strip()
+secret_file = '/var/secrets/cometvc/django_secret'
+if os.path.isfile(secret_file):
+    with open(secret_file) as f:
+        SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
