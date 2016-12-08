@@ -81,9 +81,7 @@ def cancel_computeset(cset):
     from api.tasks import update_computeset
     syslog.syslog(syslog.LOG_DEBUG, "cancel_computeset() running")
 
-    cmd = ['/usr/bin/timeout',
-           '2',
-           '/usr/bin/scancel',
+    cmd = ['/usr/bin/scancel',
            '--batch',
            '--quiet',
            '--signal=USR1',
@@ -103,11 +101,7 @@ def cancel_computeset(cset):
 
     except CalledProcessError as e:
         cset["state"] = "failed"
-        if e.returncode == 124:
-            msg = "CalledProcessError: Timeout during request: %s" % (
-                e.output.strip().rstrip())
-        else:
-            msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
+        msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
