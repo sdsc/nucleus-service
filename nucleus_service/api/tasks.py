@@ -90,15 +90,11 @@ def cancel_computeset(cset):
         syslog.syslog(syslog.LOG_INFO, "Cancelling computeset job %s" % cset['name'])
 
     except OSError as e:
-        cset["state"] = "failed"
         msg = "OSError: %s" % (e)
-        update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
     except CalledProcessError as e:
-        cset["state"] = "failed"
         msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
-        update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
 
