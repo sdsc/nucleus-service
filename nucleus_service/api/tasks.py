@@ -60,15 +60,11 @@ def submit_computeset(cset):
         syslog.syslog(syslog.LOG_INFO, "Submitting computeset job %s" % cset['name'])
 
     except OSError as e:
-        cset["state"] = "failed"
         msg = "OSError: %s" % (e)
-        update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
     except CalledProcessError as e:
-        cset["state"] = "failed"
         msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
-        update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
 @shared_task(ignore_result=True)
@@ -81,9 +77,7 @@ def cancel_computeset(cset):
     from api.tasks import update_computeset
     syslog.syslog(syslog.LOG_DEBUG, "cancel_computeset() running")
 
-    cmd = ['/usr/bin/timeout',
-           '2',
-           '/usr/bin/scancel',
+    cmd = ['/usr/bin/scancel',
            '--batch',
            '--quiet',
            '--signal=USR1',
@@ -96,19 +90,11 @@ def cancel_computeset(cset):
         syslog.syslog(syslog.LOG_INFO, "Cancelling computeset job %s" % cset['name'])
 
     except OSError as e:
-        cset["state"] = "failed"
         msg = "OSError: %s" % (e)
-        update_computeset.delay(cset)
         syslog.syslog(syslog.LOG_ERR, msg)
 
     except CalledProcessError as e:
-        cset["state"] = "failed"
-        if e.returncode == 124:
-            msg = "CalledProcessError: Timeout during request: %s" % (
-                e.output.strip().rstrip())
-        else:
-            msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
-        update_computeset.delay(cset)
+        msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         syslog.syslog(syslog.LOG_ERR, msg)
 
 
