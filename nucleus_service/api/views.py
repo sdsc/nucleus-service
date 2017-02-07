@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import detail_route
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -661,7 +661,7 @@ class ProjectListView(ListAPIView):
 
 
 class ImageUploadView(APIView):
-    parser_classes = (FileUploadParser,)
+    parser_classes = (MultiPartParser,)
 
     def get(self, request, format=None):
         filepath = '/mnt/images/public'
