@@ -668,20 +668,22 @@ class ImageUploadView(APIView):
         return Response(["public/%s"%dir for dir in os.listdir(filepath)])
 
     def post(self, request, format=None):
-        #groups = request.user.groups.all()
         file_obj = request.FILES['file']
-        #filepath = '/mnt/images/%s/%s'%(groups[0].name, file_obj.name)
-        filepath = '/mnt/images/public/%s' % (file_obj.name)
-        if not request.META.get('HTTP_MD5'):
-            return Response("md5 was not provided", status=400)
+        try:
+            filepath = '/mnt/images/public/%s' % (file_obj.name)
+            if not request.META.get('HTTP_MD5'):
+                return Response("md5 was not provided", status=400)
 
-        if request.META['HTTP_MD5'] != md5_for_file(file_obj.chunks()):
-            return Response("md5 does not match the file", status=400)
+            if request.META['HTTP_MD5'] != md5_for_file(file_obj.chunks()):
+                return Response("md5 does not match the file", status=400)
 
-        with open(filepath, 'wb+') as destination:
-            for chunk in file_obj.chunks():
-                destination.write(chunk)
-        return Response(status=204)
+            with open(filepath, 'wb+') as destination:
+                for chunk in file_obj.chunks():
+                    destination.write(chunk)
+            return Response(status=204)
+        finally:
+            if(file_obj):
+                file_obj.close()
 
 
 def md5_for_file(chunks):
