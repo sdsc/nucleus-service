@@ -10,7 +10,14 @@ from nucleus import settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nucleus.settings')
 os.environ.setdefault('C_FORCE_ROOT', '1')
 
-app = Celery('nucleus', broker='pyamqp://comet-fe5/nucleus')
+rabbitmq_server = "localhost"
+if(os.path.isfile('/opt/rocks/etc/rabbitmq.conf')):
+    with open('/opt/rocks/etc/rabbitmq.conf', 'r') as \
+        rabbit_url_file:
+        rabbitmq_server = rabbit_url_file.read().rstrip('\n')
+
+
+app = Celery('nucleus', broker='pyamqp://%s/nucleus'%rabbitmq_server)
 
 app.config_from_object(settings)
 app.autodiscover_tasks(['api'], force=True)
