@@ -202,4 +202,6 @@ SWAGGER_SETTINGS = {
     "api_path": "/nucleus"  # the path to API (it could not be a root level)
 }
 
-SDSC_ADMINS=['dmishin', 'tcooper', 'jhayes', 'cirving']
+SDSC_ADMINS=['dmishin', 'tcooper', 'cirving']
+if os.path.isfile("/etc/nucleus/nucleus.conf"):
+    execfile("/etc/nucleus/nucleus.conf")
