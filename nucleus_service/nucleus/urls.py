@@ -17,10 +17,14 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from nucleus import views
 
+from rest_framework_swagger.views import get_swagger_view
+
+schema_view = get_swagger_view(title='Nucleus API')
+
 urlpatterns = [
     url(r'^v1/', include('api.urls')),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^docs/', include('rest_framework_swagger.urls')),
+    url(r'^docs/', schema_view),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^getkey$', views.getkey),
 ]

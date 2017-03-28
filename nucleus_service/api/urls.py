@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from rest_framework.routers import Route, DynamicDetailRoute
 from rest_framework_nested.routers import SimpleRouter, NestedSimpleRouter
 
@@ -100,7 +100,6 @@ class FrontendRouter(NestedSimpleRouter):
         )
     ]
 
-
 router = ClusterRouter()
 router.register(r'^', views.ClusterViewSet, base_name='cluster')
 
@@ -125,8 +124,7 @@ frontend_console_router = FrontendConsoleRouter(router, r"^", lookup="console")
 frontend_console_router.register(
     r'frontend/console', views.FrontendConsoleViewSet, base_name='cluster-console')
 
-urlpatterns = patterns(
-    'api.views',
+urlpatterns = [
     url(r'^accounts', include('django.contrib.auth.urls')),
     url(r'^cluster', include(router.urls)),
     url(r'^cluster', include(compute_router.urls)),
@@ -144,4 +142,4 @@ urlpatterns = patterns(
     #
     url(r'^project', views.ProjectListView.as_view(), name='rest_user_projects'),
     url(r'^image', views.ImageUploadView.as_view(), name='rest_images')
-)
+]

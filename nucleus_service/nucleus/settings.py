@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-import ssl
 import os.path
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,11 +56,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_pam',
+    'rest_framework_swagger',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_httpsignature',
     'api',
-    'rest_framework_swagger',
     'rest_auth'
 )
 
@@ -143,64 +142,20 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     )
 }
 
-CELERY_TASK_SERIALIZER = 'auth'
-
-CELERY_SECURITY_KEY = '/var/secrets/cometvc/key.pem'
-CELERY_SECURITY_CERTIFICATE = '/var/secrets/cometvc/cert.pem'
-CELERY_SECURITY_CERT_STORE = '/var/secrets/cometvc/pub/*.pem'
-
-BROKER_LOGIN_METHOD = 'EXTERNAL'
-
-CELERY_ROUTES = (
-    {'api.tasks.submit_computeset':
-     {'routing_key': 'frontend'}
-     },
-    {'api.tasks.cancel_computeset':
-     {'routing_key': 'frontend'}
-     },
-    {'api.tasks.poweron_nodeset':
-     {'routing_key': 'frontend'}
-     },
-    {'api.tasks.poweron_nodes':
-     {'routing_key': 'frontend'}
-     },
-    {'api.tasks.poweroff_nodes':
-     {'routing_key': 'frontend'}
-     },
-    {'api.tasks.attach_iso':
-     {'routing_key': 'frontend'}
-     },
-    {'api.tasks.update_computeset':
-     {'routing_key': 'update'}
-     },
-    {'api.tasks.update_clusters':
-     {'routing_key': 'update'}
-     }
-)
-
-CELERY_QUEUES = {
-    'frontend': {
-        'binding_key': 'frontend',
-    },
-    'update': {
-        'binding_key': 'update',
-    },
-}
-
-BROKER_USE_SSL = {
-  'keyfile': '/var/secrets/cometvc/key.pem',
-  'certfile': '/var/secrets/cometvc/cert.pem',
-  'ca_certs': '/var/secrets/cometvc/ca.pem',
-  'cert_reqs': ssl.CERT_REQUIRED
-}
 
 SWAGGER_SETTINGS = {
     "api_version": '1.0',  # API's version
     "api_path": "/nucleus"  # the path to API (it could not be a root level)
 }
+
+NAS="comet-image-32-5"
 
 SDSC_ADMINS=['dmishin', 'tcooper', 'cirving']
 if os.path.isfile("/etc/nucleus/nucleus.conf"):
