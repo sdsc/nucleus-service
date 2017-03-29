@@ -58,7 +58,8 @@ app.conf.update(
     task_serializer='auth',
     security_key='/var/secrets/cometvc/key.pem',
     security_certificate='/var/secrets/cometvc/cert.pem',
-    security_cert_store='/var/secrets/cometvc/pub/*.pem'
+    security_cert_store='/var/secrets/cometvc/pub/*.pem',
+    task_time_limit=60
 )
 
 app.autodiscover_tasks(['api'])
