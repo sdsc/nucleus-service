@@ -8,9 +8,7 @@ from nucleus.celery import *
 
 from api.tasks import update_clusters
 
-NAS = "comet-image-32-5"
-
-images_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'storagemap', NAS,
+images_req = Popen(['/opt/rocks/bin/rocks', 'list', 'host', 'storagemap', settings.NAS,
                       'json=true'], stdout=PIPE, stderr=PIPE)
 (out, err) = images_req.communicate()
 

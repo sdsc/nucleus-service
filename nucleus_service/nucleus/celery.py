@@ -5,6 +5,7 @@ import os
 from celery import Celery
 from celery.security import setup_security
 
+import ssl
 from nucleus import settings
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nucleus.settings')
@@ -19,12 +20,49 @@ if(os.path.isfile('/opt/rocks/etc/rabbitmq.conf')):
 
 app = Celery('nucleus', broker='pyamqp://%s/nucleus'%rabbitmq_server)
 
-app.config_from_object(settings)
-app.autodiscover_tasks(['api'], force=True)
 
-app.conf.update(CELERY_ACCEPT_CONTENT=['application/json', 'json'])
-app.conf.update(CELERY_TASK_SERIALIZER='auth')
-app.conf.update(CELERY_RESULT_SERIALIZER='json')
+app.conf.update(
+    task_routes=(
+    {'api.tasks.submit_computeset':
+     {'queue': 'frontend'}
+     },
+    {'api.tasks.cancel_computeset':
+     {'queue': 'frontend'}
+     },
+    {'api.tasks.poweron_nodeset':
+     {'queue': 'frontend'}
+     },
+    {'api.tasks.poweron_nodes':
+     {'queue': 'frontend'}
+     },
+    {'api.tasks.poweroff_nodes':
+     {'queue': 'frontend'}
+     },
+    {'api.tasks.attach_iso':
+     {'queue': 'frontend'}
+     },
+    {'api.tasks.update_computeset':
+     {'queue': 'update'}
+     },
+    {'api.tasks.update_clusters':
+     {'queue': 'update'}
+     }
+    ),
+    broker_login_method='EXTERNAL',
+    broker_use_ssl={
+      'keyfile': '/var/secrets/cometvc/key.pem',
+      'certfile': '/var/secrets/cometvc/cert.pem',
+      'ca_certs': '/var/secrets/cometvc/ca.pem',
+      'cert_reqs': ssl.CERT_REQUIRED
+    },
+    task_serializer='auth',
+    security_key='/var/secrets/cometvc/key.pem',
+    security_certificate='/var/secrets/cometvc/cert.pem',
+    security_cert_store='/var/secrets/cometvc/pub/*.pem',
+    task_time_limit=60
+)
+
+app.autodiscover_tasks(['api'])
 
 # This check is for roll installation: if certs are not there, settings won't work
 if(os.path.isfile('/var/secrets/cometvc/key.pem') and
