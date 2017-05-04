@@ -147,6 +147,7 @@ class ComputeSet(models.Model):
     name = models.CharField(max_length=64, unique=True, null=True)
     user = models.CharField(max_length=30)
     account = models.CharField(max_length=80)
+    reservation = models.CharField(max_length=80)
     walltime_mins = models.PositiveIntegerField()
     nodelist = models.TextField(null=True)
     node_count = models.PositiveIntegerField(null=True)

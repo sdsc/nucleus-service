@@ -124,8 +124,8 @@ class ComputeSetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComputeSet
-        fields = ['computes', 'id', 'state', 'cluster', 'account', 'walltime_mins', 'start_time']
-        read_only_fields = ('computes', 'id', 'state', 'cluster', 'account', 'walltime_mins', 'start_time')
+        fields = ['computes', 'id', 'state', 'cluster', 'account', 'walltime_mins', 'start_time', 'reservation']
+        read_only_fields = ('computes', 'id', 'state', 'cluster', 'account', 'walltime_mins', 'start_time', 'reservation')
 
 
 class FullComputeSetSerializer(serializers.ModelSerializer):
@@ -135,9 +135,9 @@ class FullComputeSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputeSet
         fields = ['computes', 'id', 'state', 'cluster', 'user', 'account',
-                  'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count']
+                  'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count', 'reservation']
         read_only_fields = ('computes', 'id', 'state', 'cluster', 'user', 'account',
-                            'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count')
+                            'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count', 'reservation')
 
 
 class ClusterSerializer(serializers.ModelSerializer):
