@@ -397,6 +397,7 @@ class ComputeSetViewSet(ModelViewSet):
         cset.jobid = None
         cset.name = None
         cset.nodelist = ""
+        cset.reservation = request.data.get("reservation")
         cset.state = ComputeSet.CSET_STATE_CREATED
         cset.node_count = len(nodes)
         cset.save()

@@ -52,6 +52,9 @@ def submit_computeset(cset):
            '/etc/slurm/VC-JOB.run',
            '%s' % (cset['walltime_mins'])]
 
+    if(cset.get('reservation')):
+        cmd.insert(3, '--reservation=%s'%cset['reservation'])
+
     try:
         output = check_output(cmd, stderr=STDOUT)
         cset["jobid"] = output.rstrip().strip()
