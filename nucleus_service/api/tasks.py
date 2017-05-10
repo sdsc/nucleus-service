@@ -67,6 +67,8 @@ def submit_computeset(cset):
         syslog.syslog(syslog.LOG_ERR, msg)
 
     except CalledProcessError as e:
+        cset["state"] = "failed"
+        update_computeset.delay(cset)
         msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         syslog.syslog(syslog.LOG_ERR, msg)
 
