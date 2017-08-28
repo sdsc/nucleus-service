@@ -26,4 +26,9 @@ if os.environ.has_key('SLURM_JOB_NODELIST'):
 
 request['start_time'] = int(time.time())
 
-update_computeset.delay(request)
+update_computeset.apply_async((request,), retry_policy={
+    'max_retries': 12,
+    'interval_start': 0,
+    'interval_step': 1,
+    'interval_max': 5,
+})

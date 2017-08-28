@@ -149,5 +149,5 @@ for cluster in result:
         traceback.print_exc()
 
 
-update_clusters.delay(result)
+update_clusters.apply_async((result,),retry_policy=settings.RETRY_POLICY)
 #print(json.dumps(result))
