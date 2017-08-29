@@ -157,6 +157,13 @@ SWAGGER_SETTINGS = {
 
 NAS="comet-image-32-5"
 
+RETRY_POLICY={
+    'max_retries': 12,
+    'interval_start': 0,
+    'interval_step': 1,
+    'interval_max': 5,
+}
+
 SDSC_ADMINS=['dmishin', 'tcooper', 'cirving']
 if os.path.isfile("/etc/nucleus/nucleus.conf"):
     execfile("/etc/nucleus/nucleus.conf")

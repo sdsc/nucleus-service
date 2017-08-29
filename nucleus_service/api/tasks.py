@@ -59,7 +59,7 @@ def submit_computeset(cset):
         output = check_output(cmd, stderr=STDOUT)
         cset["jobid"] = output.rstrip().strip()
         cset["state"] = "submitted"
-        update_computeset.delay(cset)
+        update_computeset.apply_async((cset,),retry_policy=settings.RETRY_POLICY)
         syslog.syslog(syslog.LOG_INFO, "Submitting computeset job %s" % cset['name'])
 
     except OSError as e:
@@ -68,7 +68,7 @@ def submit_computeset(cset):
 
     except CalledProcessError as e:
         cset["state"] = "failed"
-        update_computeset.delay(cset)
+        update_computeset.apply_async((cset,),retry_policy=settings.RETRY_POLICY)
         msg = "CalledProcessError: %s" % (e.output.strip().rstrip())
         syslog.syslog(syslog.LOG_ERR, msg)
 
@@ -91,7 +91,7 @@ def cancel_computeset(cset):
     try:
         output = check_output(cmd, stderr=STDOUT)
         cset["state"] = "cancelled"
-        update_computeset.delay(cset)
+        update_computeset.apply_async((cset,),retry_policy=settings.RETRY_POLICY)
         syslog.syslog(syslog.LOG_INFO, "Cancelling computeset job %s" % cset['name'])
 
     except OSError as e:
@@ -158,7 +158,7 @@ def update_computeset(cset_json):
 
                     hosts = hostlist.expand_hostlist("%s" % cset.nodelist)
                     # TODO: vlan & switchport configuration
-                    poweron_nodeset.delay(nodes, hosts, None)
+                    poweron_nodeset.apply_async((nodes, hosts, None),retry_policy=settings.RETRY_POLICY)
 
     except ComputeSet.DoesNotExist:
         cset = None
