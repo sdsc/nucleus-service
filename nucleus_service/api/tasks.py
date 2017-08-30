@@ -4,6 +4,7 @@ from subprocess import Popen, PIPE, check_output, STDOUT, CalledProcessError
 import traceback
 import syslog
 
+from nucleus import settings
 from celery import shared_task
 syslog.openlog('nucleus-service', syslog.LOG_PID, syslog.LOG_USER)
 
