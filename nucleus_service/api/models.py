@@ -129,6 +129,7 @@ class ComputeSet(models.Model):
     CSET_STATE_SUBMITTED = 'submitted'
     CSET_STATE_FAILED = 'failed'
     CSET_STATE_RUNNING = 'running'
+    CSET_STATE_HELD = 'held'
     CSET_STATE_CANCELLED = 'cancelled'
     CSET_STATE_ENDING = 'ending'
     CSET_STATE_COMPLETED = 'completed'
@@ -137,6 +138,7 @@ class ComputeSet(models.Model):
         (CSET_STATE_SUBMITTED, 'Submitted'),
         (CSET_STATE_FAILED, 'Failed'),
         (CSET_STATE_RUNNING, 'Running'),
+        (CSET_STATE_HELD, 'Held'),
         (CSET_STATE_CANCELLED, 'Cancelled'),
         (CSET_STATE_ENDING, 'Ending'),
         (CSET_STATE_COMPLETED, 'Completed'),

@@ -367,6 +367,7 @@ class ComputeSetViewSet(ModelViewSet):
                     computeset__state__in=[
                         ComputeSet.CSET_STATE_CREATED,
                         ComputeSet.CSET_STATE_SUBMITTED,
+                        ComputeSet.CSET_STATE_HELD,
                         ComputeSet.CSET_STATE_RUNNING,
                         ComputeSet.CSET_STATE_ENDING]
                 ).exclude(state="active").filter(Q(image_state="unmapped") | Q(image_state__isnull=True)).exclude(image_locked=True)[:int(request.data["count"])]
