@@ -141,6 +141,7 @@ class ComputeSet(models.Model):
         (CSET_STATE_ENDING, 'Ending'),
         (CSET_STATE_COMPLETED, 'Completed'),
     )
+    created = models.DateTimeField(auto_now_add=True)
     computes = models.ManyToManyField(Compute, related_name='computeset')
     cluster = models.ForeignKey(Cluster, on_delete=models.CASCADE)
     jobid = models.PositiveIntegerField(unique=True, null=True)
