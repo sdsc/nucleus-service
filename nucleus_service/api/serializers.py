@@ -134,9 +134,9 @@ class FullComputeSetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComputeSet
-        fields = ['computes', 'id', 'state', 'cluster', 'user', 'account',
+        fields = ['created', 'computes', 'id', 'state', 'cluster', 'user', 'account',
                   'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count', 'reservation']
-        read_only_fields = ('computes', 'id', 'state', 'cluster', 'user', 'account',
+        read_only_fields = ('created', 'computes', 'id', 'state', 'cluster', 'user', 'account',
                             'walltime_mins', 'jobid', 'name', 'nodelist', 'state', 'node_count', 'reservation')
 
 
